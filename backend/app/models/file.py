@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped
 
 Model = db.Model
 if TYPE_CHECKING:
-    from app.models import Household, Recipe, Expense
+    from app.models import Household, Recipe, Expense, ItemAttachment
     from app.helpers.db_model_base import DbModelBase
 
     Model = DbModelBase
@@ -66,6 +66,15 @@ class File(Model, DbModelAuthorizeMixin):
             uselist=False,
         ),
     )
+    # Una stessa foto/PDF puo' teoricamente essere riferita da piu' allegati
+    # (anche se in pratica ne creiamo sempre uno nuovo per ogni upload).
+    item_attachments: Mapped[list["ItemAttachment"]] = cast(
+        Mapped[list["ItemAttachment"]],
+        db.relationship(
+            "ItemAttachment",
+            back_populates="file",
+        ),
+    )
 
     def delete(self):
         """
@@ -81,6 +90,7 @@ class File(Model, DbModelAuthorizeMixin):
             and not self.recipe
             and not self.expense
             and not self.profile_picture
+            and not self.item_attachments
         )
 
     def checkAuthorized(
@@ -101,6 +111,17 @@ class File(Model, DbModelAuthorizeMixin):
             super().checkAuthorized(
                 household_id=self.expense.household_id, requires_admin=requires_admin
             )
+        elif self.item_attachments:
+            # Tutti i membri della household possono vedere i file allegati ai
+            # prodotti della household stessa: basta che almeno uno dei legami sia ok.
+            for att in self.item_attachments:
+                if att.item is not None:
+                    super().checkAuthorized(
+                        household_id=att.item.household_id,
+                        requires_admin=requires_admin,
+                    )
+                    return
+            raise ForbiddenRequest()
         else:
             raise ForbiddenRequest()
 

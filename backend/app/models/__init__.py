@@ -1,5 +1,6 @@
 from .user import User
 from .item import Item
+from .item_attachment import ItemAttachment
 from .association import Association
 from .expense import Expense, ExpensePaidFor
 from .settings import Settings

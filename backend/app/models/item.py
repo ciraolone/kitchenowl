@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped
 
 Model = db.Model
 if TYPE_CHECKING:
-    from app.models import Household, RecipeItems, ShoppinglistItems
+    from app.models import Household, RecipeItems, ShoppinglistItems, ItemAttachment
     from app.helpers.db_model_base import DbModelBase
 
     Model = DbModelBase
@@ -62,6 +62,18 @@ class Item(Model, DbModelAuthorizeMixin):
         ),
     )
 
+    # Allegati (foto + PDF) ordinati per "ordering" crescente.
+    # La prima foto in questo elenco e' la copertina mostrata nella lista spesa.
+    attachments: Mapped[List["ItemAttachment"]] = cast(
+        Mapped[List["ItemAttachment"]],
+        db.relationship(
+            "ItemAttachment",
+            back_populates="item",
+            cascade="all, delete-orphan",
+            order_by="ItemAttachment.ordering",
+        ),
+    )
+
     # determines order of items in the shoppinglist
     ordering = db.Column(db.Integer, server_default="0")
     # frequency of item, used for item suggestions
@@ -83,6 +95,15 @@ class Item(Model, DbModelAuthorizeMixin):
         cascade="all, delete-orphan",
     )
 
+    def cover_attachment(self) -> Optional["ItemAttachment"]:
+        # Restituisce la prima foto (per "ordering" crescente) usata come copertina
+        # nelle viste compatte (lista spesa, suggerimenti, ecc.). Calcolata via
+        # iterazione sulla relazione gia' caricata, senza query aggiuntive.
+        for att in self.attachments:
+            if att.kind == "photo":
+                return att
+        return None
+
     def obj_to_dict(
         self,
         skip_columns: list[str] | None = None,
@@ -92,6 +113,20 @@ class Item(Model, DbModelAuthorizeMixin):
         if self.category_id:
             category = cast(Category, Category.find_by_id(self.category_id))
             res["category"] = category.obj_to_dict()
+        # Esponi solo la copertina (non tutto l'elenco) per le viste compatte.
+        # Per la pagina dettaglio dell'item usare obj_to_full_dict().
+        cover = self.cover_attachment()
+        if cover is not None:
+            res["cover_photo"] = cover.file_filename
+            res["cover_hash"] = cover.file.blur_hash if cover.file else None
+        return res
+
+    def obj_to_full_dict(self) -> dict[str, Any]:
+        # Versione "ricca" usata dagli endpoint di dettaglio: include tutti gli
+        # allegati, gia' ordinati, cosi' il client puo' costruire griglia foto
+        # e lista PDF in un solo round-trip.
+        res = self.obj_to_dict()
+        res["attachments"] = [a.obj_to_dict() for a in self.attachments]
         return res
 
     def obj_to_export_dict(self) -> dict[str, Any]:
