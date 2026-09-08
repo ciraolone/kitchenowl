@@ -1,12 +1,15 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kitchenowl/helpers/named_bytearray.dart';
 import 'package:kitchenowl/kitchenowl.dart';
 import 'package:kitchenowl/models/category.dart';
 import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/models/item.dart';
+import 'package:kitchenowl/models/item_attachment.dart';
 import 'package:kitchenowl/models/recipe.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
+import 'package:kitchenowl/services/api/item.dart';
 import 'package:kitchenowl/services/transaction_handler.dart';
 import 'package:kitchenowl/services/transactions/item.dart';
 import 'package:kitchenowl/services/transactions/shoppinglist.dart';
@@ -40,6 +43,7 @@ class ItemEditCubit<T extends Item> extends Cubit<ItemEditState> {
           icon: item.icon,
           name: item.name,
           category: item.category,
+          attachments: item.attachments ?? const [],
         )) {
     refresh();
   }
@@ -60,7 +64,105 @@ class ItemEditCubit<T extends Item> extends Cubit<ItemEditState> {
             return -1;
           }
         }));
-      emit(state.copyWith(recipes: recipes));
+      // Ricarica anche gli allegati: l'endpoint /item/<id> ora risponde "full".
+      final fresh = await ApiService.getInstance().getItem(_item);
+      emit(state.copyWith(
+        recipes: recipes,
+        attachments: fresh?.attachments ?? state.attachments,
+      ));
+    }
+  }
+
+  // Switch della modalita' modifica (mostra/nasconde drag handle e cestini).
+  void toggleEditing() {
+    emit(state.copyWith(isEditing: !state.isEditing));
+  }
+
+  // Carica un file binario via /api/upload (foto/PDF) e lo aggancia all'item.
+  Future<bool> addAttachmentBytes(
+    NamedByteArray file,
+    ItemAttachmentKind kind, {
+    String? label,
+  }) async {
+    if (_item.id == null) return false;
+    final filename = await ApiService.getInstance().uploadBytes(file);
+    if (filename == null) return false;
+
+    final created = await ApiService.getInstance().addItemAttachment(
+      _item,
+      filename,
+      kind,
+      label: label,
+    );
+    if (created == null) return false;
+
+    emit(state.copyWith(
+      attachments: List<ItemAttachment>.from(state.attachments)..add(created),
+    ));
+    return true;
+  }
+
+  Future<bool> deleteAttachment(ItemAttachment attachment) async {
+    if (_item.id == null) return false;
+    final ok = await ApiService.getInstance().deleteItemAttachment(
+      _item,
+      attachment,
+    );
+    if (!ok) return false;
+    emit(state.copyWith(
+      attachments:
+          state.attachments.where((a) => a.id != attachment.id).toList(),
+    ));
+    return true;
+  }
+
+  Future<bool> renameAttachment(
+    ItemAttachment attachment,
+    String? newLabel,
+  ) async {
+    if (_item.id == null) return false;
+    final updated = await ApiService.getInstance().renameItemAttachment(
+      _item,
+      attachment,
+      newLabel,
+    );
+    if (updated == null) return false;
+    emit(state.copyWith(
+      attachments: state.attachments
+          .map((a) => a.id == updated.id ? updated : a)
+          .toList(),
+    ));
+    return true;
+  }
+
+  // Riordina gli allegati di un certo "kind" (foto o PDF).
+  // L'ordine fornito determina la sequenza nella griglia/lista; per le foto
+  // la prima diventa la copertina mostrata in lista spesa.
+  Future<void> reorderAttachments(
+    ItemAttachmentKind kind,
+    List<ItemAttachment> newOrder,
+  ) async {
+    if (_item.id == null) return;
+    // Aggiornamento ottimistico del local state prima della chiamata di rete:
+    // permette al drag&drop di sembrare istantaneo e poi rilancia la lista
+    // se il server risponde con un ordine diverso.
+    final others =
+        state.attachments.where((a) => a.kind != kind).toList(growable: false);
+    emit(state.copyWith(
+      attachments: [
+        ...others,
+        for (int i = 0; i < newOrder.length; i++)
+          newOrder[i].copyWith(ordering: i),
+      ],
+    ));
+
+    final result = await ApiService.getInstance().reorderItemAttachments(
+      _item,
+      kind,
+      newOrder.map((a) => a.id).toList(),
+    );
+    if (result != null) {
+      emit(state.copyWith(attachments: [...others, ...result]));
     }
   }
 
@@ -137,6 +239,12 @@ class ItemEditState extends Equatable {
   final List<Recipe> recipes;
   final Category? category;
   final bool hasMerged;
+  // Tutti gli allegati dell'item, ordinati come arrivano dal backend (foto e PDF
+  // mescolati ma comunque per "ordering" crescente, raggruppabili per "kind"
+  // dalla UI).
+  final List<ItemAttachment> attachments;
+  // Modalita' modifica attiva: la UI mostra maniglie di drag e cestini.
+  final bool isEditing;
 
   const ItemEditState({
     this.name = "",
@@ -145,7 +253,21 @@ class ItemEditState extends Equatable {
     this.recipes = const [],
     this.category,
     this.hasMerged = false,
+    this.attachments = const [],
+    this.isEditing = false,
   });
+
+  // Comodo: foto ordinate per "ordering" (la prima e' la copertina).
+  List<ItemAttachment> get photos => attachments
+      .where((a) => a.kind == ItemAttachmentKind.photo)
+      .toList()
+    ..sort((a, b) => a.ordering.compareTo(b.ordering));
+
+  // Comodo: PDF ordinati per "ordering".
+  List<ItemAttachment> get pdfs => attachments
+      .where((a) => a.kind == ItemAttachmentKind.pdf)
+      .toList()
+    ..sort((a, b) => a.ordering.compareTo(b.ordering));
 
   ItemEditState copyWith({
     String? name,
@@ -154,6 +276,8 @@ class ItemEditState extends Equatable {
     List<Recipe>? recipes,
     Nullable<Category>? category,
     bool? hasMerged,
+    List<ItemAttachment>? attachments,
+    bool? isEditing,
   }) =>
       ItemEditState(
         name: name ?? this.name,
@@ -162,11 +286,21 @@ class ItemEditState extends Equatable {
         recipes: recipes ?? this.recipes,
         category: (category ?? Nullable(this.category)).value,
         hasMerged: hasMerged ?? this.hasMerged,
+        attachments: attachments ?? this.attachments,
+        isEditing: isEditing ?? this.isEditing,
       );
 
   @override
-  List<Object?> get props =>
-      [name, description, icon, recipes, category, hasMerged];
+  List<Object?> get props => [
+        name,
+        description,
+        icon,
+        recipes,
+        category,
+        hasMerged,
+        attachments,
+        isEditing,
+      ];
 
   bool hasChanged(Item comparedTo) =>
       hasChangedItem(comparedTo) || hasChangedDescription(comparedTo);

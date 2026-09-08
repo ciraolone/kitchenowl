@@ -37,6 +37,10 @@ class ShoppingItemWidget<T extends Item> extends StatelessWidget {
             title: item.name,
             selected: selected,
             icon: ItemIcons.get(item),
+            // Se l'item ha foto allegate, la prima viene mostrata come copertina
+            // al posto dell'icona/emoji nella lista della spesa.
+            coverPhoto: item.coverPhoto,
+            coverHash: item.coverHash,
             description: (item is ItemWithDescription)
                 ? (item as ItemWithDescription).description
                 : null,

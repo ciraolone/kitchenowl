@@ -13,6 +13,7 @@ import 'package:kitchenowl/models/item.dart';
 import 'package:kitchenowl/kitchenowl.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/models/update_value.dart';
+import 'package:kitchenowl/widgets/item_attachments_section.dart';
 import 'package:kitchenowl/widgets/item_popup_menu_button.dart';
 import 'package:kitchenowl/widgets/item_wrap_menu.dart';
 import 'package:kitchenowl/widgets/recipe_item.dart';
@@ -77,7 +78,9 @@ class _ItemPageState<T extends Item> extends State<ItemPage<T>> {
             }
           }
         },
-        child: Scaffold(
+        child: BlocProvider<ItemEditCubit>.value(
+          value: cubit,
+          child: Scaffold(
           appBar: AppBar(
             title: BlocBuilder<ItemEditCubit, ItemEditState>(
               bloc: cubit,
@@ -85,6 +88,20 @@ class _ItemPageState<T extends Item> extends State<ItemPage<T>> {
               builder: (context, state) => Text(state.name),
             ),
             actions: [
+              // Pulsante "Modifica/Fatto" attivo solo se l'item esiste
+              // (in fase di creazione non ci sono ancora allegati da modificare).
+              if (!App.isOffline && widget.item.id != null)
+                BlocBuilder<ItemEditCubit, ItemEditState>(
+                  bloc: cubit,
+                  buildWhen: (p, c) => p.isEditing != c.isEditing,
+                  builder: (context, state) => IconButton(
+                    tooltip: state.isEditing ? "Fatto" : "Modifica",
+                    icon: Icon(
+                      state.isEditing ? Icons.done : Icons.edit_outlined,
+                    ),
+                    onPressed: cubit.toggleEditing,
+                  ),
+                ),
               if (!App.isOffline)
                 ItemPopupMenuButton(
                   item: cubit.item,
@@ -371,6 +388,12 @@ class _ItemPageState<T extends Item> extends State<ItemPage<T>> {
                         );
                       },
                     ),
+                  // Sezione allegati (foto griglia + lista PDF). Visibile solo
+                  // per item gia' salvati (con id), in linea con il resto della UI.
+                  if (widget.item.id != null && widget.item is! RecipeItem)
+                    SliverToBoxAdapter(
+                      child: ItemAttachmentsSection(item: cubit.item),
+                    ),
                   SliverToBoxAdapter(
                     child:
                         SizedBox(height: MediaQuery.paddingOf(context).bottom),
@@ -380,6 +403,7 @@ class _ItemPageState<T extends Item> extends State<ItemPage<T>> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

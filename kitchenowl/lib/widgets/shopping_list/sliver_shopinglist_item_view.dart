@@ -12,7 +12,9 @@ class SliverShopinglistItemView extends StatelessWidget {
   final List<Category> categories;
   final void Function()? onRefresh;
   final Nullable<void Function(ShoppinglistItem)>? onPressed;
+  final Nullable<void Function(ShoppinglistItem)>? onLongPressed;
   final Nullable<void Function(ItemWithDescription)>? onRecentPressed;
+  final Nullable<void Function(ItemWithDescription)>? onRecentLongPressed;
   final ShoppinglistSorting sorting;
   final bool isLoading;
   final List<ShoppinglistItem> selectedListItems;
@@ -24,7 +26,9 @@ class SliverShopinglistItemView extends StatelessWidget {
     required this.categories,
     this.onRefresh,
     this.onPressed,
+    this.onLongPressed,
     this.onRecentPressed,
+    this.onRecentLongPressed,
     required this.sorting,
     required this.isLoading,
     required this.selectedListItems,
@@ -49,6 +53,7 @@ class SliverShopinglistItemView extends StatelessWidget {
         isLoading: isLoading,
         onRefresh: onRefresh,
         onPressed: onPressed,
+        onLongPressed: onLongPressed,
         shoppingListStyle: shoppingListStyle,
       );
     } else {
@@ -75,6 +80,7 @@ class SliverShopinglistItemView extends StatelessWidget {
           isLoading: isLoading,
           onRefresh: onRefresh,
           onPressed: onPressed,
+          onLongPressed: onLongPressed,
           shoppingListStyle: shoppingListStyle,
         ));
       }
@@ -93,6 +99,7 @@ class SliverShopinglistItemView extends StatelessWidget {
                   .toList() ??
               [],
           onPressed: onRecentPressed,
+          onLongPressed: onRecentLongPressed,
           categories: categories,
           shoppingList: shoppingList,
           onRefresh: onRefresh,

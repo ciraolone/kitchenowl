@@ -1,6 +1,7 @@
 import 'package:fraction/fraction.dart';
 import 'package:kitchenowl/helpers/string_scaler.dart';
 import 'package:kitchenowl/models/category.dart';
+import 'package:kitchenowl/models/item_attachment.dart';
 import 'package:kitchenowl/models/model.dart';
 
 import 'nullable.dart';
@@ -13,6 +14,14 @@ class Item extends Model {
   final Category? category;
   final bool? isDefault;
   final String? defaultKey;
+  // Filename della prima foto allegata (la "copertina"), inviato dal backend
+  // nelle viste compatte per mostrare il thumbnail nella lista spesa.
+  final String? coverPhoto;
+  // Hash di sfocatura della copertina, usato come placeholder grafico.
+  final String? coverHash;
+  // Elenco completo degli allegati (foto + PDF). Popolato solo dagli endpoint
+  // di dettaglio; null nelle liste compatte per non appesantire le risposte.
+  final List<ItemAttachment>? attachments;
 
   const Item({
     this.id,
@@ -22,6 +31,9 @@ class Item extends Model {
     this.category,
     this.isDefault,
     this.defaultKey,
+    this.coverPhoto,
+    this.coverHash,
+    this.attachments,
   });
 
   factory Item.fromItem({
@@ -35,6 +47,9 @@ class Item extends Model {
         ordering: item.ordering,
         isDefault: item.isDefault,
         defaultKey: item.defaultKey,
+        coverPhoto: item.coverPhoto,
+        coverHash: item.coverHash,
+        attachments: item.attachments,
       );
 
   factory Item.fromJson(Map<String, dynamic> map) => Item(
@@ -46,12 +61,24 @@ class Item extends Model {
         icon: map['icon'],
         category:
             map['category'] != null ? Category.fromJson(map['category']) : null,
+        coverPhoto: map['cover_photo'],
+        coverHash: map['cover_hash'],
+        attachments: map['attachments'] != null
+            ? List<ItemAttachment>.from(
+                (map['attachments'] as List).map(
+                  (e) => ItemAttachment.fromJson(e as Map<String, dynamic>),
+                ),
+              )
+            : null,
       );
 
   Item copyWith({
     String? name,
     Nullable<Category>? category,
     Nullable<String>? icon,
+    Nullable<String>? coverPhoto,
+    Nullable<String>? coverHash,
+    Nullable<List<ItemAttachment>>? attachments,
   }) =>
       Item(
         id: id,
@@ -59,11 +86,24 @@ class Item extends Model {
         category: (category ?? Nullable(this.category)).value,
         icon: (icon ?? Nullable(this.icon)).value,
         ordering: ordering,
+        coverPhoto: (coverPhoto ?? Nullable(this.coverPhoto)).value,
+        coverHash: (coverHash ?? Nullable(this.coverHash)).value,
+        attachments: (attachments ?? Nullable(this.attachments)).value,
       );
 
   @override
-  List<Object?> get props =>
-      [id, name, icon, ordering, isDefault, defaultKey, category];
+  List<Object?> get props => [
+        id,
+        name,
+        icon,
+        ordering,
+        isDefault,
+        defaultKey,
+        category,
+        coverPhoto,
+        coverHash,
+        attachments,
+      ];
 
   @override
   Map<String, dynamic> toJson() => {
@@ -93,6 +133,9 @@ class ItemWithDescription extends Item {
     super.isDefault,
     super.defaultKey,
     super.category,
+    super.coverPhoto,
+    super.coverHash,
+    super.attachments,
     this.description = '',
   });
 
@@ -106,6 +149,8 @@ class ItemWithDescription extends Item {
         defaultKey: map['default_key'],
         category:
             map['category'] != null ? Category.fromJson(map['category']) : null,
+        coverPhoto: map['cover_photo'],
+        coverHash: map['cover_hash'],
       );
 
   factory ItemWithDescription.fromItem({
@@ -120,6 +165,9 @@ class ItemWithDescription extends Item {
         ordering: item.ordering,
         isDefault: item.isDefault,
         defaultKey: item.defaultKey,
+        coverPhoto: item.coverPhoto,
+        coverHash: item.coverHash,
+        attachments: item.attachments,
         description: description ??
             ((item is ItemWithDescription) ? item.description : ''),
       );
@@ -136,6 +184,9 @@ class ItemWithDescription extends Item {
     Nullable<Category>? category,
     Nullable<String>? icon,
     String? description,
+    Nullable<String>? coverPhoto,
+    Nullable<String>? coverHash,
+    Nullable<List<ItemAttachment>>? attachments,
   }) =>
       ItemWithDescription(
         id: id,
@@ -146,6 +197,9 @@ class ItemWithDescription extends Item {
         ordering: ordering,
         isDefault: isDefault,
         defaultKey: defaultKey,
+        coverPhoto: (coverPhoto ?? Nullable(this.coverPhoto)).value,
+        coverHash: (coverHash ?? Nullable(this.coverHash)).value,
+        attachments: (attachments ?? Nullable(this.attachments)).value,
       );
 
   @override
@@ -165,6 +219,8 @@ class ShoppinglistItem extends ItemWithDescription {
     super.ordering = 0,
     super.defaultKey,
     super.isDefault,
+    super.coverPhoto,
+    super.coverHash,
     this.createdById,
     this.createdAt,
   });
@@ -180,6 +236,8 @@ class ShoppinglistItem extends ItemWithDescription {
       icon: map['icon'],
       category:
           map['category'] != null ? Category.fromJson(map['category']) : null,
+      coverPhoto: map['cover_photo'],
+      coverHash: map['cover_hash'],
       createdAt: map['created_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['created_at'], isUtc: true)
               .toLocal()
@@ -207,6 +265,8 @@ class ShoppinglistItem extends ItemWithDescription {
         ordering: item.ordering,
         isDefault: item.isDefault,
         defaultKey: item.defaultKey,
+        coverPhoto: item.coverPhoto,
+        coverHash: item.coverHash,
         createdAt: createdAt ?? DateTime.now(),
         createdById: createdById,
       );
@@ -217,6 +277,9 @@ class ShoppinglistItem extends ItemWithDescription {
     Nullable<Category>? category,
     Nullable<String>? icon,
     String? description,
+    Nullable<String>? coverPhoto,
+    Nullable<String>? coverHash,
+    Nullable<List<ItemAttachment>>? attachments,
   }) =>
       ShoppinglistItem(
         id: id,
@@ -227,6 +290,8 @@ class ShoppinglistItem extends ItemWithDescription {
         ordering: ordering,
         isDefault: isDefault,
         defaultKey: defaultKey,
+        coverPhoto: (coverPhoto ?? Nullable(this.coverPhoto)).value,
+        coverHash: (coverHash ?? Nullable(this.coverHash)).value,
       );
 
   @override
@@ -298,6 +363,9 @@ class RecipeItem extends ItemWithDescription {
     Nullable<String>? icon,
     String? description,
     bool? optional,
+    Nullable<String>? coverPhoto,
+    Nullable<String>? coverHash,
+    Nullable<List<ItemAttachment>>? attachments,
   }) =>
       RecipeItem(
         id: id,

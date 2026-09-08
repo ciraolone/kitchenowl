@@ -180,7 +180,10 @@ class _ShoppinglistPageState extends State<ShoppinglistPage> {
                                               .contains(item)),
                                   isLoading:
                                       state is LoadingShoppinglistCubitState,
-                                  onPressed: Nullable((Item item) {
+                                  // Tap apre la pagina dettaglio (foto/PDF);
+                                  // l'azione di "spunto/aggiunta/selezione"
+                                  // e' assegnata al long press.
+                                  onLongPressed: Nullable((Item item) {
                                     if (item is ShoppinglistItem) {
                                       if (App
                                           .settings.shoppingListTapToRemove) {
@@ -236,19 +239,22 @@ class _ShoppinglistPageState extends State<ShoppinglistPage> {
                                           state.selectedListItems,
                                       sorting: state.sorting,
                                       shoppingList: state.selectedShoppinglist,
-                                      onPressed: Nullable((Item item) {
-                                        if (item is ShoppinglistItem) {
-                                          if (App.settings
-                                              .shoppingListTapToRemove) {
-                                            cubit.remove(item);
-                                          } else {
-                                            cubit.selectItem(item);
-                                          }
+                                      // Tap apre la pagina dettaglio (foto/PDF);
+                                      // l'azione di "spunto/selezione" passa
+                                      // al long press.
+                                      onLongPressed:
+                                          Nullable((ShoppinglistItem item) {
+                                        if (App.settings
+                                            .shoppingListTapToRemove) {
+                                          cubit.remove(item);
                                         } else {
-                                          cubit.add(item);
+                                          cubit.selectItem(item);
                                         }
                                       }),
-                                      onRecentPressed: Nullable(cubit.add),
+                                      // Anche per i "recenti" il tap apre la
+                                      // pagina dettaglio; long press = aggiungi
+                                      // alla lista (per coerenza UX).
+                                      onRecentLongPressed: Nullable(cubit.add),
                                       onRefresh: cubit.refresh,
                                     ),
                                   ],

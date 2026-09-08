@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/models/item.dart';
+import 'package:kitchenowl/models/item_attachment.dart';
 import 'package:kitchenowl/models/recipe.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
 
@@ -82,5 +83,69 @@ extension ItemApi on ApiService {
     );
 
     return res.statusCode == 200;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Allegati: il client carica prima il file con uploadBytes() che ritorna un
+  // filename, poi associa il filename all'item con addItemAttachment().
+  // ---------------------------------------------------------------------------
+
+  Future<ItemAttachment?> addItemAttachment(
+    Item item,
+    String filename,
+    ItemAttachmentKind kind, {
+    String? label,
+  }) async {
+    final res = await post(
+      '$baseRoute/${item.id}/attachment',
+      jsonEncode({
+        "filename": filename,
+        "kind": kind.toJson(),
+        if (label != null) "label": label,
+      }),
+    );
+    if (res.statusCode != 200) return null;
+    return ItemAttachment.fromJson(jsonDecode(res.body));
+  }
+
+  Future<ItemAttachment?> renameItemAttachment(
+    Item item,
+    ItemAttachment attachment,
+    String? label,
+  ) async {
+    final res = await post(
+      '$baseRoute/${item.id}/attachment/${attachment.id}',
+      jsonEncode({"label": label}),
+    );
+    if (res.statusCode != 200) return null;
+    return ItemAttachment.fromJson(jsonDecode(res.body));
+  }
+
+  Future<bool> deleteItemAttachment(
+    Item item,
+    ItemAttachment attachment,
+  ) async {
+    final res =
+        await delete('$baseRoute/${item.id}/attachment/${attachment.id}');
+    return res.statusCode == 200;
+  }
+
+  Future<List<ItemAttachment>?> reorderItemAttachments(
+    Item item,
+    ItemAttachmentKind kind,
+    List<int> orderedIds,
+  ) async {
+    final res = await put(
+      '$baseRoute/${item.id}/attachment/reorder',
+      jsonEncode({
+        "kind": kind.toJson(),
+        "order": orderedIds,
+      }),
+    );
+    if (res.statusCode != 200) return null;
+    final body = List.from(jsonDecode(res.body));
+    return body
+        .map((e) => ItemAttachment.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }
