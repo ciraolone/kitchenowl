@@ -8,6 +8,6 @@
 - [x] App: trascinamento dei reparti e righe generiche
 - [x] App: voce Add category nel pannello casa
 - [x] App: prove
-- [ ] Prova sull'emulatore
+- [x] Prova sull'emulatore
 - [ ] Rilascio di server e APK
 - [ ] Prova sul campo di Andrea
