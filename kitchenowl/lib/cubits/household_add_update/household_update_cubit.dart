@@ -211,14 +211,14 @@ class HouseholdUpdateCubit
         .addCategory(household, Category(name: name));
     refresh();
 
-    return res;
+    return res.statusCode == 200;
   }
 
   Future<bool> updateCategory(Category category) async {
     final res = await ApiService.getInstance().updateCategory(category);
     refresh();
 
-    return res;
+    return res.statusCode == 200;
   }
 
   Future<bool> reorderCategory(int oldIndex, int newIndex) async {
@@ -232,7 +232,7 @@ class HouseholdUpdateCubit
 
     refresh();
 
-    return res;
+    return res.statusCode == 200;
   }
 
   Future<bool> mergeCategory(Category category, Category other) async {

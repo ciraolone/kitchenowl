@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
+
 import 'package:kitchenowl/models/category.dart';
 import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
@@ -16,23 +18,13 @@ extension CategoryApi on ApiService {
     ));
   }
 
-  Future<bool> addCategory(Household household, Category category) async {
-    final res = await post(
-      householdPath(household) + baseRoute,
-      jsonEncode(category.toJson()),
-    );
+  // Le risposte intere servono al postino della coda (feature 005), che
+  // distingue "riprova" da "rifiutata" e prende l'id del reparto creato
+  Future<http.Response> addCategory(Household household, Category category) =>
+      post(householdPath(household) + baseRoute, jsonEncode(category.toJson()));
 
-    return res.statusCode == 200;
-  }
-
-  Future<bool> updateCategory(Category category) async {
-    final res = await post(
-      '$baseRoute/${category.id}',
-      jsonEncode(category.toJson()),
-    );
-
-    return res.statusCode == 200;
-  }
+  Future<http.Response> updateCategory(Category category) =>
+      post('$baseRoute/${category.id}', jsonEncode(category.toJson()));
 
   Future<bool> mergeCategories(Category category, Category other) async {
     final res = await post(

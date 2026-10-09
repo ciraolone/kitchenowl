@@ -25,6 +25,9 @@ class SliverCategoryItemGridList<T extends Item> extends StatefulWidget {
   final ShoppingListStyle shoppingListStyle;
   final ItemArrangement<T>? arrangement;
 
+  /// Avvolge il nome del reparto, per renderlo trascinabile (features/005).
+  final Widget Function(Widget title)? wrapTitle;
+
   const SliverCategoryItemGridList({
     super.key,
     required this.name,
@@ -41,6 +44,7 @@ class SliverCategoryItemGridList<T extends Item> extends StatefulWidget {
     this.splitByCategories = false,
     this.shoppingListStyle = const ShoppingListStyle(),
     this.arrangement,
+    this.wrapTitle,
   });
 
   @override
@@ -64,7 +68,9 @@ class _SliverCategoryItemGridListState<T extends Item>
       for (int i = 0; i < categoryLength + 1; i++) {
         Category? category = i < categoryLength ? widget.categories![i] : null;
         final List<T> items =
-            widget.items.where((e) => e.category == category).toList();
+            widget.items
+            .where((e) => isSameCategory(e.category, category))
+            .toList();
         if (items.isEmpty) continue;
 
         list.add(SliverCategoryItemGridList(
@@ -96,14 +102,16 @@ class _SliverCategoryItemGridListState<T extends Item>
         arrangement: widget.arrangement,
       ));
 
-    return SliverExpansionTile(
-      title: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Text(
-          widget.name,
-          style: titleTextStyle,
-        ),
+    final title = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Text(
+        widget.name,
+        style: titleTextStyle,
       ),
+    );
+
+    return SliverExpansionTile(
+      title: widget.wrapTitle?.call(title) ?? title,
       sliver: MultiSliver(children: list),
     );
   }

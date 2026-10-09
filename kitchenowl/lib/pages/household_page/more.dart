@@ -5,6 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:kitchenowl/app.dart';
 import 'package:kitchenowl/cubits/auth_cubit.dart';
 import 'package:kitchenowl/cubits/household_cubit.dart';
+import 'package:kitchenowl/cubits/shoppinglist_cubit.dart';
 import 'package:kitchenowl/enums/update_enum.dart';
 import 'package:kitchenowl/enums/views_enum.dart';
 import 'package:kitchenowl/kitchenowl.dart';
@@ -14,18 +15,43 @@ import 'package:kitchenowl/widgets/household_image.dart';
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
 
-  /// Pannello del pulsante casa: cambio casa, profilo, impostazioni. Lo
+  /// Pannello del pulsante casa: cambio casa, profilo, impostazioni e
+  /// reparto nuovo (features/005, per questo serve ShoppinglistCubit). Lo
   /// aprono la barra laterale e il pulsante accanto alla ricerca della lista.
-  static void show(BuildContext context, HouseholdCubit householdCubit) {
+  static void show(
+    BuildContext context,
+    HouseholdCubit householdCubit,
+    ShoppinglistCubit shoppinglistCubit,
+  ) {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => BlocProvider.value(
-        value: householdCubit,
+      builder: (context) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: householdCubit),
+          BlocProvider.value(value: shoppinglistCubit),
+        ],
         child: const MorePage(),
       ),
     );
+  }
+
+  static Future<void> _addCategory(BuildContext context) async {
+    final shoppinglistCubit = BlocProvider.of<ShoppinglistCubit>(context);
+    // Il dialogo si apre sopra il pannello e il pannello si chiude dopo:
+    // chiudendolo prima, il suo context non servirebbe più ad aprire nulla
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => TextDialog(
+        title: AppLocalizations.of(context)!.addCategory,
+        doneText: AppLocalizations.of(context)!.add,
+        hintText: AppLocalizations.of(context)!.name,
+        isInputValid: (s) => s.trim().isNotEmpty,
+      ),
+    );
+    if (context.mounted) context.pop();
+    if (name != null) await shoppinglistCubit.addCategory(name);
   }
 
   @override
@@ -119,6 +145,14 @@ class MorePage extends StatelessWidget {
                     ],
               );
             },
+          ),
+          Card(
+            child: ListTile(
+              title: Text(AppLocalizations.of(context)!.addCategory),
+              leading: const Icon(Icons.create_new_folder_rounded),
+              minLeadingWidth: 16,
+              onTap: () => _addCategory(context),
+            ),
           ),
           Card(
             child: ListTile(

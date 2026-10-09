@@ -34,6 +34,9 @@ def addCategory(args, household_id):
     category = Category()
     category.name = args["name"]
     category.household_id = household_id
+    # In fondo, dopo i reparti già presenti (fork di Andrea, feature 005):
+    # con 0 finiva in cima, mescolato per nome col primo reparto
+    category.ordering = len(Category.all_by_ordering(household_id))
     category.save()
     return jsonify(category.obj_to_dict())
 

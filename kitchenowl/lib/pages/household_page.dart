@@ -135,7 +135,7 @@ class _HouseholdPageState extends State<HouseholdPage>
         expenseListCubit.refresh();
         break;
       case ViewsEnum.more:
-        MorePage.show(context, householdCubit);
+        MorePage.show(context, householdCubit, shoppingListCubit);
         return;
     }
     context.go("/household/${widget.household.id}/${tapped.toString()}");

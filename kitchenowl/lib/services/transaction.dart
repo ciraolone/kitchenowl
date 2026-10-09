@@ -1,4 +1,5 @@
 import 'package:kitchenowl/models/model.dart';
+import 'package:kitchenowl/services/transactions/category.dart';
 import 'package:kitchenowl/services/transactions/planner.dart';
 import 'package:kitchenowl/services/transactions/shoppinglist.dart';
 import 'package:kitchenowl/services/transactions/shoppinglist_arrange.dart';
@@ -16,6 +17,9 @@ abstract class Transaction<T> extends Model {
         TransactionShoppingListUpdateItem.fromJson(m, t),
     "TransactionShoppingListArrangeItem": (m, t) =>
         TransactionShoppingListArrangeItem.fromJson(m, t),
+    "TransactionCategoryAdd": (m, t) => TransactionCategoryAdd.fromJson(m, t),
+    "TransactionCategoryArrange": (m, t) =>
+        TransactionCategoryArrange.fromJson(m, t),
     "TransactionShoppingListAddRecipeItems": (m, t) =>
         TransactionShoppingListAddRecipeItems.fromJson(m, t),
     "TransactionPlannerAddRecipe": (m, t) =>

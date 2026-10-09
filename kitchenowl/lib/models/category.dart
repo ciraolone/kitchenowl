@@ -34,3 +34,15 @@ class Category extends Model {
         ordering: ordering ?? this.ordering,
       );
 }
+
+/// Stesso reparto anche quando uno dei due si porta dietro un ordering vecchio
+/// o non ha ancora un id perché creato senza rete (features/005, plan
+/// "Confronto fra reparti"): per id se entrambi lo hanno, altrimenti per nome.
+/// null è "Uncategorized".
+bool isSameCategory(Category? a, Category? b) {
+  if (a == null || b == null) return a == b;
+  final aId = a.id;
+  final bId = b.id;
+  if (aId != null && bId != null) return aId == bId;
+  return a.name.toLowerCase() == b.name.toLowerCase();
+}

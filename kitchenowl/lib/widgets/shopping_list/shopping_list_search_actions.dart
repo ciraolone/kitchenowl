@@ -40,6 +40,7 @@ class ShoppingListSearchActions extends StatelessWidget {
             onPressed: () => MorePage.show(
               context,
               BlocProvider.of<HouseholdCubit>(context),
+              shoppinglistCubit,
             ),
             tooltip: ViewsEnum.more.toLocalizedString(context),
             icon: ViewsEnum.more.toIconWidget(context) ??

@@ -4,7 +4,9 @@
 /// momento in cui è stata fatta e traduce la risposta in un Delivery. Gli
 /// articoli aggiunti senza rete non hanno ancora un id: lo si ricava dal
 /// catalogo locale, che la consegna dell'aggiunta (sempre precedente in coda)
-/// ha già aggiornato con l'articolo creato dal server. Le transazioni in
+/// ha già aggiornato con l'articolo creato dal server. Allo stesso modo un
+/// reparto creato senza rete (feature 005) si ricava per nome dalla copia
+/// locale dei reparti con categoryIdOf. Le transazioni in
 /// services/transactions/shoppinglist.dart chiamano queste funzioni dal loro
 /// deliver().
 library;
@@ -17,6 +19,7 @@ import 'package:kitchenowl/models/item.dart';
 import 'package:kitchenowl/models/nullable.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
+import 'package:kitchenowl/services/local_first/category_order.dart';
 import 'package:kitchenowl/services/local_first/delivery.dart';
 import 'package:kitchenowl/services/local_first/item_catalog.dart';
 
@@ -133,7 +136,15 @@ Future<Delivery> deliverArrangedItem({
   if (before != null) {
     body['before_item_id'] = await _resolveItemId(household, before);
   }
-  if (category != null) body['category'] = category.value?.toJsonWithId();
+  if (category != null) {
+    final target = category.value;
+    final categoryId =
+        target == null ? null : await categoryIdOf(household, target);
+    if (target != null && categoryId == null) {
+      return const Delivery(DeliveryOutcome.rejected);
+    }
+    body['category'] = target == null ? null : {'id': categoryId};
+  }
 
   final response = await ApiService.getInstance().arrangeItem(household, body);
   return Delivery(deliveryOutcomeOf(response));

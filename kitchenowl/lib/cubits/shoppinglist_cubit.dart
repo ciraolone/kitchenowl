@@ -10,6 +10,7 @@ import 'package:kitchenowl/models/item.dart';
 import 'package:kitchenowl/models/nullable.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
+import 'package:kitchenowl/services/local_first/category_order.dart';
 import 'package:kitchenowl/services/local_first/item_catalog.dart';
 import 'package:kitchenowl/services/local_first/item_route.dart';
 import 'package:kitchenowl/services/local_first/shoppinglist_search.dart';
@@ -361,7 +362,7 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     if (shoppinglist == null || moved.name == target.name) return;
     final isByCategory = state.sorting == ShoppinglistSorting.category;
     final group = shoppinglist.items
-        .where((e) => !isByCategory || e.category == target.category)
+        .where((e) => !isByCategory || isSameCategory(e.category, target.category))
         .sorted(compareByRoute);
     final isMovingDown = group.indexWhere((e) => e.name == moved.name) <
         group.indexWhere((e) => e.name == target.name);
@@ -390,13 +391,44 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     Category? category,
   ) async {
     final shoppinglist = state.selectedShoppinglist;
-    if (shoppinglist == null || moved.category == category) return;
+    if (shoppinglist == null || isSameCategory(moved.category, category)) {
+      return;
+    }
     await _arrange(TransactionShoppingListArrangeItem(
       household: household,
       shoppinglist: shoppinglist,
       item: moved,
       category: Nullable(category),
     ));
+  }
+
+  /// Trascinamento di un reparto su un altro (feature 005-reparti-dalla-lista):
+  /// prende la sua posizione, quindi finisce subito dopo se scendeva e subito
+  /// prima se saliva. Vale per tutta la casa, come dalle impostazioni.
+  Future<void> arrangeCategory(Category moved, Category target) async {
+    final index =
+        state.categories.indexWhere((e) => isSameCategory(e, target));
+    if (index < 0 || isSameCategory(moved, target)) return;
+    emit(state.copyWith(
+      categories: moveCategory(state.categories, moved: moved, index: index),
+    ));
+    await TransactionHandler.getInstance().runTransaction(
+      TransactionCategoryArrange(
+        household: household,
+        category: moved,
+        index: index,
+      ),
+    );
+  }
+
+  /// Reparto nuovo dal pannello del pulsante casa (feature 005): va in fondo.
+  Future<void> addCategory(String name) async {
+    emit(state.copyWith(
+      categories: addCategoryNamed(state.categories, name),
+    ));
+    await TransactionHandler.getInstance().runTransaction(
+      TransactionCategoryAdd(household: household, name: name.trim()),
+    );
   }
 
   Future<void> _arrange(TransactionShoppingListArrangeItem transaction) async {
@@ -541,10 +573,14 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     }
 
     await TransactionHandler.getInstance().runOpenTransactions();
-    final categories = fetchCategories();
+    // Anche le azioni sui reparti ancora in coda (features/005) vanno
+    // riapplicate sopra i reparti freschi: si aspettano prima del replay
+    final freshCategories = fetchCategories();
     await fetchShoppingLists();
+    await freshCategories;
     await TransactionHandler.getInstance().replayPending(household);
     final shoppingLists = await fetchShoppingLists(true);
+    final categories = fetchCategories(true);
 
     int? selectedShoppinglistId = state.selectedShoppinglistId;
     if (selectedShoppinglistId != null &&

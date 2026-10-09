@@ -276,6 +276,8 @@ class _ShoppinglistPageState extends State<ShoppinglistPage>
                                       onArrange: cubit.arrangeItem,
                                       onMoveToCategory:
                                           cubit.moveItemToCategory,
+                                      onArrangeCategory:
+                                          cubit.arrangeCategory,
                                     ),
                                   ],
                                 ),
