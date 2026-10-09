@@ -9,7 +9,7 @@ L'ordine automatico (per ordine d'acquisto) si impara solo dalle spese e si aggi
 ## Comportamento
 
 - Il trascinamento c'è negli ordinamenti **automatico** e **per reparti**. Nell'ordinamento **alfabetico** non c'è: lì tutto resta com'è.
-- Tenendo premuto un articolo e muovendo il dito lo si trascina. Tenendolo premuto e lasciandolo senza muoverlo si apre la sua scheda, come prima. Non c'è una zona apposta per aprire la scheda.
+- Tenendo premuto un articolo e muovendo il dito lo si trascina. Tenendolo premuto e lasciandolo senza muoverlo si apre la sua scheda, come prima. Non c'è una zona apposta per aprire la scheda. Quando la pressione lunga scatta, il telefono dà un "tac" netto.
 - Lasciando l'articolo sopra un altro articolo, prende il suo posto: se scendeva finisce subito dopo, se saliva subito prima. Lo spostamento si vede subito e funziona anche senza rete.
 - Ordinamento automatico: l'ordine è quello di tutta la lista.
 - Ordinamento per reparti: dentro ogni reparto gli articoli seguono l'ordine automatico (il percorso nel negozio) e non più l'alfabeto, così lo spostamento dentro un reparto resta visibile.
