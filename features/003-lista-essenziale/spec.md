@@ -15,3 +15,4 @@ Andrea usa l'app quasi solo per la lista della spesa: la barra in basso con rice
 - Il pulsante casa apre lo stesso pannello di prima (cambio casa, profilo, impostazioni). Senza rete mostra la nuvola barrata, come faceva nella barra.
 - Ricette, pianificatore e spese non sono più raggiungibili dal telefono: restano sul server e nella versione web.
 - Su tablet e computer (barra laterale) non cambia nulla.
+- Un tocco su un articolo fa l'azione della lista: con "Remove item interaction" su **Tap** lo spunta subito, su **Confirm** lo seleziona; sui risultati della ricerca e sui recenti lo aggiunge. La scheda dell'articolo (foto, PDF, descrizione) si apre tenendolo premuto. Prima, col fork delle foto, era il contrario, e l'impostazione "Tap" sembrava non funzionare.

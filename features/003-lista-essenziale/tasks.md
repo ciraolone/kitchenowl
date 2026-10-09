@@ -6,4 +6,5 @@
 - [x] Niente barra in basso sui telefoni
 - [x] Pulsanti ordinamento e casa sulla riga della ricerca
 - [x] Prova sull'emulatore
+- [x] Tocco singolo spunta, pressione lunga apre la scheda
 - [ ] Prova sul campo di Andrea
