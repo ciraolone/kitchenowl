@@ -11,6 +11,8 @@ from app.models.item_attachment import (
     MAX_PDFS_PER_ITEM,
 )
 from app.service.file_has_access_or_download import file_has_access_or_download
+from app.service.item_route import place_in_route, remember_route
+from app.service.shoppinglist_change_order import changed_at_to_datetime
 from app import db
 from .schemas import (
     SearchByNameRequest,
@@ -19,6 +21,7 @@ from .schemas import (
     AddItemAttachment,
     UpdateItemAttachment,
     ReorderItemAttachments,
+    ArrangeItem,
 )
 
 item = Blueprint("item", __name__)
@@ -108,6 +111,51 @@ def addItem(args, household_id):
     item.save()
 
     return jsonify(item.obj_to_dict())
+
+
+# Trascinamento nella lista della spesa (fork di Andrea, feature 004): sposta l'articolo nel percorso e/o in un altro reparto e ricorda l'ordine del gruppo per l'analisi notturna. Vince l'ultimo arrivato, senza la regola delle sovrapposizioni della feature 001.
+@itemHousehold.route("/arrange", methods=["POST"])
+@jwt_required()
+@authorize_household()
+@validate_args(ArrangeItem)
+def arrangeItem(args, household_id):
+    moved = _household_item(household_id, args["item_id"])
+    after = _household_item(household_id, args.get("after_item_id"))
+    before = _household_item(household_id, args.get("before_item_id"))
+
+    if "category" in args:
+        category = (
+            Category.find_by_id(args["category"]["id"]) if args["category"] else None
+        )
+        if category is not None and category.household_id != household_id:
+            raise InvalidUsage()
+        moved.category = category
+        db.session.add(moved)
+
+    place_in_route(household_id, moved, after=after, before=before)
+    known_ids = {
+        item.id
+        for item in Item.query.filter(
+            Item.household_id == household_id, Item.id.in_(args["route"])
+        ).all()
+    }
+    remember_route(
+        household_id,
+        [item_id for item_id in args["route"] if item_id in known_ids],
+        changed_at_to_datetime(args.get("changed_at")),
+    )
+    db.session.commit()
+
+    return jsonify(moved.obj_to_dict())
+
+
+def _household_item(household_id: int, item_id: int | None) -> Item | None:
+    if item_id is None:
+        return None
+    item = Item.find_by_id(item_id)
+    if not item or item.household_id != household_id:
+        raise NotFoundRequest()
+    return item
 
 
 @item.route("/<int:id>", methods=["POST"])

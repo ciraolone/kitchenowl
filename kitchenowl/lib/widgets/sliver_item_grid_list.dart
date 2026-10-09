@@ -10,6 +10,7 @@ import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/models/update_value.dart';
 import 'package:kitchenowl/pages/item_page.dart';
 import 'package:kitchenowl/widgets/shopping_item.dart';
+import 'package:kitchenowl/widgets/shopping_list/arrangeable_item.dart';
 
 /// A Sliver Grid or List depending on the shopping list style
 class SliverItemGridList<T extends Item> extends StatelessWidget {
@@ -24,6 +25,11 @@ class SliverItemGridList<T extends Item> extends StatelessWidget {
   final Widget Function(T)? extraOption;
   final ShoppingListStyle shoppingListStyle;
 
+  /// Se c'è, le caselle si possono trascinare (features/004): la pressione
+  /// lunga la gestisce ArrangeableItem, che apre la scheda se il dito non si
+  /// è mosso.
+  final ItemArrangement<T>? arrangement;
+
   const SliverItemGridList({
     super.key,
     this.onRefresh,
@@ -36,6 +42,7 @@ class SliverItemGridList<T extends Item> extends StatelessWidget {
     this.isLoading = false,
     this.extraOption,
     this.shoppingListStyle = const ShoppingListStyle(),
+    this.arrangement,
   });
 
   @override
@@ -51,21 +58,7 @@ class SliverItemGridList<T extends Item> extends StatelessWidget {
               key: ValueKey(i),
               gridStyle: !shoppingListStyle.isList,
             )
-          : ShoppingItemWidget<T>(
-              key: ObjectKey(items[i]),
-              item: items[i],
-              selected: selected?.call(items[i]) ?? false,
-              gridStyle: !shoppingListStyle.isList,
-              listStyle: shoppingListStyle.listStyle,
-              onPressed:
-                  (onPressed ?? Nullable((item) => openMenu(context, item)))
-                      .value,
-              raised: shoppingListStyle.allRaised,
-              onLongPressed:
-                  (onLongPressed ?? Nullable((item) => openMenu(context, item)))
-                      .value,
-              extraOption: extraOption?.call(items[i]),
-            ),
+          : _buildTile(context, items[i]),
     );
 
     return SliverPadding(
@@ -84,6 +77,36 @@ class SliverItemGridList<T extends Item> extends StatelessWidget {
               ),
             )
           : SliverList(delegate: delegate),
+    );
+  }
+
+  Widget _buildTile(BuildContext context, T item) {
+    final arrangement = this.arrangement;
+    final tile = ShoppingItemWidget<T>(
+      key: ObjectKey(item),
+      item: item,
+      selected: selected?.call(item) ?? false,
+      gridStyle: !shoppingListStyle.isList,
+      listStyle: shoppingListStyle.listStyle,
+      onPressed:
+          (onPressed ?? Nullable((item) => openMenu(context, item))).value,
+      raised: shoppingListStyle.allRaised,
+      onLongPressed: arrangement != null
+          ? null
+          : (onLongPressed ?? Nullable((item) => openMenu(context, item)))
+              .value,
+      extraOption: extraOption?.call(item),
+    );
+    if (arrangement == null) return tile;
+
+    // Chiave per nome e non per oggetto: un aggiornamento della lista durante
+    // il trascinamento non deve ricreare la casella trascinata
+    return ArrangeableItem<T>(
+      key: ValueKey(item.name),
+      item: item,
+      arrangement: arrangement,
+      onOpen: () => openMenu(context, item),
+      child: tile,
     );
   }
 

@@ -1,6 +1,6 @@
 /// Consegna al server delle azioni sulla lista della spesa fatte sul telefono
 /// (feature 001-local-first del fork di Andrea): aggiunta, modifica della
-/// descrizione, spunta singola e multipla. Ogni funzione manda l'azione con il
+/// descrizione, spunta singola e multipla, trascinamento (feature 004). Ogni funzione manda l'azione con il
 /// momento in cui è stata fatta e traduce la risposta in un Delivery. Gli
 /// articoli aggiunti senza rete non hanno ancora un id: lo si ricava dal
 /// catalogo locale, che la consegna dell'aggiunta (sempre precedente in coda)
@@ -11,8 +11,10 @@ library;
 
 import 'dart:convert';
 
+import 'package:kitchenowl/models/category.dart';
 import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/models/item.dart';
+import 'package:kitchenowl/models/nullable.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
 import 'package:kitchenowl/services/local_first/delivery.dart';
@@ -103,6 +105,38 @@ Future<Delivery> deliverRemovedItems({
     outcome,
     supersededIds.map((id) => namesById[id]).nonNulls.toList(),
   );
+}
+
+/// category è null se il reparto non cambia; Nullable(null) toglie il
+/// reparto. route è il gruppo (lista o reparto) nell'ordine lasciato da
+/// Andrea: gli articoli senza id noto si saltano, il ricordo vale lo stesso.
+Future<Delivery> deliverArrangedItem({
+  required Household household,
+  required Item item,
+  Item? after,
+  Item? before,
+  Nullable<Category>? category,
+  required List<Item> route,
+  required DateTime changedAt,
+}) async {
+  final itemId = await _resolveItemId(household, item);
+  if (itemId == null) return const Delivery(DeliveryOutcome.rejected);
+  final body = <String, dynamic>{
+    'item_id': itemId,
+    'changed_at': changedAt.toUtc().millisecondsSinceEpoch,
+    'route': [
+      for (final routeItem in route) await _resolveItemId(household, routeItem),
+    ].nonNulls.toList(),
+  };
+  if (after != null)
+    body['after_item_id'] = await _resolveItemId(household, after);
+  if (before != null) {
+    body['before_item_id'] = await _resolveItemId(household, before);
+  }
+  if (category != null) body['category'] = category.value?.toJsonWithId();
+
+  final response = await ApiService.getInstance().arrangeItem(household, body);
+  return Delivery(deliveryOutcomeOf(response));
 }
 
 Future<int?> _resolveItemId(Household household, Item item) async =>

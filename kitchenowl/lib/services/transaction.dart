@@ -1,6 +1,7 @@
 import 'package:kitchenowl/models/model.dart';
 import 'package:kitchenowl/services/transactions/planner.dart';
 import 'package:kitchenowl/services/transactions/shoppinglist.dart';
+import 'package:kitchenowl/services/transactions/shoppinglist_arrange.dart';
 
 abstract class Transaction<T> extends Model {
   static final Map<String, Transaction Function(Map<String, dynamic>, DateTime)>
@@ -13,6 +14,8 @@ abstract class Transaction<T> extends Model {
         TransactionShoppingListRemoveItems.fromJson(m, t),
     "TransactionShoppingListUpdateItem": (m, t) =>
         TransactionShoppingListUpdateItem.fromJson(m, t),
+    "TransactionShoppingListArrangeItem": (m, t) =>
+        TransactionShoppingListArrangeItem.fromJson(m, t),
     "TransactionShoppingListAddRecipeItems": (m, t) =>
         TransactionShoppingListAddRecipeItems.fromJson(m, t),
     "TransactionPlannerAddRecipe": (m, t) =>

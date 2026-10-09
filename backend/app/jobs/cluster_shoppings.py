@@ -2,11 +2,13 @@ from app import app
 from app.models import History
 
 import time
+from datetime import datetime
 from dbscan1d.core import DBSCAN1D
 import numpy as np
 
 
-def clusterShoppings(shoppinglist_id: int) -> list | None:
+# Ogni spesa riconosciuta è (momento della prima spunta, id degli articoli in ordine di spunta): il momento serve a mettere le spese in fila con i ricordi dei trascinamenti (service/item_route.py, fork di Andrea feature 004)
+def clusterShoppings(shoppinglist_id: int) -> list[tuple[datetime, list[int]]] | None:
     dropped = History.find_dropped_by_shoppinglist_id(shoppinglist_id)
 
     if len(dropped) == 0:
@@ -18,7 +20,8 @@ def clusterShoppings(shoppinglist_id: int) -> list | None:
 
     timestamps = np.array(times)
     # time distance for items to be considered in one shopping action (in seconds)
-    eps = 600
+    # 2 ore invece dei 10 minuti originali: Andrea spunta con calma (fork, feature 004)
+    eps = 7200
     # minimum size for clusters to be accepted
     min_samples = 5
     dbs = DBSCAN1D(eps=eps, min_samples=min_samples)
@@ -37,11 +40,18 @@ def clusterShoppings(shoppinglist_id: int) -> list | None:
             clusters[label].append(i)
 
     # indices to list of itemlists for each found shopping instance
-    shopping_instances = [[dropped[i].item_id for i in cluster] for cluster in clusters]
+    shopping_instances = [
+        (dropped[cluster[0]].created_at, [dropped[i].item_id for i in cluster])
+        for cluster in clusters
+        if cluster
+    ]
 
     # remove duplicates in the instances, keeping the order items were checked off:
     # the ordering job learns from that sequence, so a set() here (unordered) would
     # make it learn the item creation order instead
-    shopping_instances = [list(dict.fromkeys(instance)) for instance in shopping_instances]
+    shopping_instances = [
+        (started_at, list(dict.fromkeys(instance)))
+        for started_at, instance in shopping_instances
+    ]
 
     return shopping_instances

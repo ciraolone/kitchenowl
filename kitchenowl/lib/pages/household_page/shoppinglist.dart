@@ -273,6 +273,9 @@ class _ShoppinglistPageState extends State<ShoppinglistPage>
                                       }),
                                       onRecentPressed: Nullable(cubit.add),
                                       onRefresh: cubit.refresh,
+                                      onArrange: cubit.arrangeItem,
+                                      onMoveToCategory:
+                                          cubit.moveItemToCategory,
                                     ),
                                   ],
                                 ),

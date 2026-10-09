@@ -3,6 +3,7 @@ import 'package:kitchenowl/kitchenowl.dart';
 import 'package:kitchenowl/models/category.dart';
 import 'package:kitchenowl/models/item.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
+import 'package:kitchenowl/widgets/shopping_list/arrangeable_item.dart';
 import 'package:kitchenowl/widgets/sliver_expansion_tile.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -22,6 +23,7 @@ class SliverCategoryItemGridList<T extends Item> extends StatefulWidget {
   final bool isSubTitle;
   final bool splitByCategories;
   final ShoppingListStyle shoppingListStyle;
+  final ItemArrangement<T>? arrangement;
 
   const SliverCategoryItemGridList({
     super.key,
@@ -38,6 +40,7 @@ class SliverCategoryItemGridList<T extends Item> extends StatefulWidget {
     this.isSubTitle = false,
     this.splitByCategories = false,
     this.shoppingListStyle = const ShoppingListStyle(),
+    this.arrangement,
   });
 
   @override
@@ -90,6 +93,7 @@ class _SliverCategoryItemGridListState<T extends Item>
         isLoading: widget.isLoading,
         extraOption: widget.extraOption,
         shoppingListStyle: widget.shoppingListStyle,
+        arrangement: widget.arrangement,
       ));
 
     return SliverExpansionTile(

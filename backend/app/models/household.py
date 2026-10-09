@@ -15,6 +15,7 @@ if TYPE_CHECKING:
         ExpenseCategory,
         User,
         File,
+        ItemRouteHint,
     )
     from app.helpers.db_model_base import DbModelBase
 
@@ -94,6 +95,13 @@ class Household(Model):
         db.relationship(
             "ExpenseCategory",
             back_populates="household",
+            cascade="all, delete-orphan",
+        ),
+    )
+    item_route_hints: Mapped[List["ItemRouteHint"]] = cast(
+        Mapped[List["ItemRouteHint"]],
+        db.relationship(
+            "ItemRouteHint",
             cascade="all, delete-orphan",
         ),
     )

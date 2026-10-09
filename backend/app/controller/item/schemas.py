@@ -89,3 +89,23 @@ class ReorderItemAttachments(Schema):
     order = fields.List(
         fields.Integer(validate=lambda a: a > 0), required=True
     )
+
+
+# Trascinamento di un articolo nella lista della spesa (fork di Andrea, feature 004): dove va (dopo o prima di un altro articolo), l'eventuale reparto nuovo e l'ordine del gruppo dopo lo spostamento, da ricordare per l'analisi notturna
+class ArrangeItem(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
+    class Category(Schema):
+        class Meta:
+            unknown = EXCLUDE
+
+        id = fields.Integer(required=True, validate=lambda a: a > 0)
+
+    item_id = fields.Integer(required=True, validate=lambda a: a > 0)
+    after_item_id = fields.Integer(validate=lambda a: a > 0, allow_none=True)
+    before_item_id = fields.Integer(validate=lambda a: a > 0, allow_none=True)
+    # Presente solo se il reparto cambia; null toglie il reparto
+    category = fields.Nested(Category(), allow_none=True)
+    route = fields.List(fields.Integer(validate=lambda a: a > 0), load_default=list)
+    changed_at = fields.Integer(allow_none=True)

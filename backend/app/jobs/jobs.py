@@ -12,6 +12,7 @@ from app.models import (
     OIDCRequest,
 )
 from app.service.delete_unused import deleteEmptyHouseholds, deleteUnusedFiles
+from app.service.item_route import route_instances
 from .item_ordering import findItemOrdering
 from .item_suggestions import findItemSuggestions
 from .cluster_shoppings import clusterShoppings
@@ -91,9 +92,12 @@ def daily():
                 ).first(),
             ).id
         )
+        # L'ordine impara anche dai trascinamenti (fork di Andrea, feature 004); i suggerimenti solo dalle spese vere
+        ordering_instances = route_instances(household.id, shopping_instances or [])
+        if ordering_instances:
+            findItemOrdering(ordering_instances)
         if shopping_instances:
-            findItemOrdering(shopping_instances)
-            findItemSuggestions(shopping_instances)
+            findItemSuggestions([items for _, items in shopping_instances])
         # recipe planner tasks
         computeRecipeSuggestions(household.id)
         Recipe.compute_suggestion_ranking(household.id)

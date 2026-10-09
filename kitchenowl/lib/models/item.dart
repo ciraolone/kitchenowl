@@ -75,6 +75,7 @@ class Item extends Model {
   Item copyWith({
     String? name,
     Nullable<Category>? category,
+    int? ordering,
     Nullable<String>? icon,
     Nullable<String>? coverPhoto,
     Nullable<String>? coverHash,
@@ -85,7 +86,7 @@ class Item extends Model {
         name: name ?? this.name,
         category: (category ?? Nullable(this.category)).value,
         icon: (icon ?? Nullable(this.icon)).value,
-        ordering: ordering,
+        ordering: ordering ?? this.ordering,
         coverPhoto: (coverPhoto ?? Nullable(this.coverPhoto)).value,
         coverHash: (coverHash ?? Nullable(this.coverHash)).value,
         attachments: (attachments ?? Nullable(this.attachments)).value,
@@ -182,6 +183,7 @@ class ItemWithDescription extends Item {
   ItemWithDescription copyWith({
     String? name,
     Nullable<Category>? category,
+    int? ordering,
     Nullable<String>? icon,
     String? description,
     Nullable<String>? coverPhoto,
@@ -194,7 +196,7 @@ class ItemWithDescription extends Item {
         category: (category ?? Nullable(this.category)).value,
         icon: (icon ?? Nullable(this.icon)).value,
         description: description ?? this.description,
-        ordering: ordering,
+        ordering: ordering ?? this.ordering,
         isDefault: isDefault,
         defaultKey: defaultKey,
         coverPhoto: (coverPhoto ?? Nullable(this.coverPhoto)).value,
@@ -275,6 +277,7 @@ class ShoppinglistItem extends ItemWithDescription {
   ShoppinglistItem copyWith({
     String? name,
     Nullable<Category>? category,
+    int? ordering,
     Nullable<String>? icon,
     String? description,
     Nullable<String>? coverPhoto,
@@ -287,11 +290,13 @@ class ShoppinglistItem extends ItemWithDescription {
         category: (category ?? Nullable(this.category)).value,
         icon: (icon ?? Nullable(this.icon)).value,
         description: description ?? this.description,
-        ordering: ordering,
+        ordering: ordering ?? this.ordering,
         isDefault: isDefault,
         defaultKey: defaultKey,
         coverPhoto: (coverPhoto ?? Nullable(this.coverPhoto)).value,
         coverHash: (coverHash ?? Nullable(this.coverHash)).value,
+        createdById: createdById,
+        createdAt: createdAt,
       );
 
   @override
@@ -360,6 +365,7 @@ class RecipeItem extends ItemWithDescription {
   RecipeItem copyWith({
     String? name,
     Nullable<Category>? category,
+    int? ordering,
     Nullable<String>? icon,
     String? description,
     bool? optional,
@@ -374,7 +380,7 @@ class RecipeItem extends ItemWithDescription {
         icon: (icon ?? Nullable(this.icon)).value,
         description: description ?? this.description,
         optional: optional ?? this.optional,
-        ordering: ordering,
+        ordering: ordering ?? this.ordering,
         isDefault: isDefault,
         defaultKey: defaultKey,
       );

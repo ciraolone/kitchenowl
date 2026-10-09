@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/models/item.dart';
 import 'package:kitchenowl/models/item_attachment.dart';
@@ -160,4 +161,12 @@ extension ItemApi on ApiService {
         .map((e) => ItemAttachment.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  /// Trascinamento nella lista della spesa (feature 004 del fork): il corpo
+  /// lo prepara deliverArrangedItem, qui solo l'indirizzo.
+  Future<http.Response> arrangeItem(
+    Household household,
+    Map<String, dynamic> body,
+  ) =>
+      post('${householdPath(household)}$baseRoute/arrange', jsonEncode(body));
 }

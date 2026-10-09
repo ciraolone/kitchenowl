@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kitchenowl/kitchenowl.dart';
 import 'package:kitchenowl/models/item.dart';
+import 'package:kitchenowl/services/local_first/item_route.dart';
 
 enum ShoppinglistSorting {
   alphabetical,
@@ -34,19 +35,14 @@ enum ShoppinglistSorting {
     if (shoppinglist.isEmpty) return;
     switch (sorting) {
       case ShoppinglistSorting.alphabetical:
-      case ShoppinglistSorting.category:
         shoppinglist.sort(
             (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
         break;
+      // Per reparti: dentro ogni reparto si segue il percorso, così un
+      // articolo trascinato resta dove lo si è lasciato (features/004)
       case ShoppinglistSorting.algorithmic:
-        shoppinglist.sort((a, b) {
-          final int ordering = a.ordering.compareTo(b.ordering);
-          // Ordering of 0 means not sortable and should be at the back
-          if (ordering != 0 && a.ordering == 0) return 1;
-          if (ordering != 0 && b.ordering == 0) return -1;
-
-          return ordering;
-        });
+      case ShoppinglistSorting.category:
+        shoppinglist.sort(compareByRoute);
         break;
     }
   }

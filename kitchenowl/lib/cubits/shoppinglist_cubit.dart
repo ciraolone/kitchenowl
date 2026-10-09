@@ -7,13 +7,16 @@ import 'package:kitchenowl/enums/shoppinglist_sorting.dart';
 import 'package:kitchenowl/models/category.dart';
 import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/models/item.dart';
+import 'package:kitchenowl/models/nullable.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
 import 'package:kitchenowl/services/local_first/item_catalog.dart';
+import 'package:kitchenowl/services/local_first/item_route.dart';
 import 'package:kitchenowl/services/local_first/shoppinglist_search.dart';
 import 'package:kitchenowl/services/storage/storage.dart';
 import 'package:kitchenowl/services/transactions/category.dart';
 import 'package:kitchenowl/services/transactions/shoppinglist.dart';
+import 'package:kitchenowl/services/transactions/shoppinglist_arrange.dart';
 import 'package:kitchenowl/services/transaction_handler.dart';
 
 class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
@@ -344,6 +347,80 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     ))) {
       await refresh();
     }
+  }
+
+  /// Trascinamento su un altro articolo (feature 004-riordino-trascinamento):
+  /// se l'articolo scendeva finisce subito dopo target, se saliva subito
+  /// prima. Il gruppo che il server ricorda per l'analisi notturna è tutta la
+  /// lista, o solo il reparto di target nell'ordinamento per reparti.
+  Future<void> arrangeItem(
+    ShoppinglistItem moved,
+    ShoppinglistItem target,
+  ) async {
+    final shoppinglist = state.selectedShoppinglist;
+    if (shoppinglist == null || moved.name == target.name) return;
+    final isByCategory = state.sorting == ShoppinglistSorting.category;
+    final group = shoppinglist.items
+        .where((e) => !isByCategory || e.category == target.category)
+        .sorted(compareByRoute);
+    final isMovingDown = group.indexWhere((e) => e.name == moved.name) <
+        group.indexWhere((e) => e.name == target.name);
+    final after = isMovingDown ? target : null;
+    final before = isMovingDown ? null : target;
+    await _arrange(TransactionShoppingListArrangeItem(
+      household: household,
+      shoppinglist: shoppinglist,
+      item: moved,
+      after: after,
+      before: before,
+      route: placeInRoute(
+        group,
+        movedName: moved.name,
+        afterName: after?.name,
+        beforeName: before?.name,
+      ),
+    ));
+  }
+
+  /// Trascinamento sulla riga di un reparto (feature 004): il cambio di
+  /// reparto è dell'articolo, quindi vale per sempre e non solo in questa
+  /// lista. category null vuol dire "Uncategorized".
+  Future<void> moveItemToCategory(
+    ShoppinglistItem moved,
+    Category? category,
+  ) async {
+    final shoppinglist = state.selectedShoppinglist;
+    if (shoppinglist == null || moved.category == category) return;
+    await _arrange(TransactionShoppingListArrangeItem(
+      household: household,
+      shoppinglist: shoppinglist,
+      item: moved,
+      category: Nullable(category),
+    ));
+  }
+
+  Future<void> _arrange(TransactionShoppingListArrangeItem transaction) async {
+    final items = arrangeItems(
+      transaction.shoppinglist.items,
+      movedName: transaction.item.name,
+      afterName: transaction.after?.name,
+      beforeName: transaction.before?.name,
+      category: transaction.category,
+    );
+    ShoppinglistSorting.sortShoppinglistItems(items, state.sorting);
+    emit(state.copyWith(
+      shoppinglists: _replaceAndUpdateShoppingLists(
+        state.shoppinglists,
+        transaction.shoppinglist.copyWith(items: items),
+      ),
+      // La selezione confronta gli articoli per valore: si riprendono quelli
+      // nuovi, altrimenti un articolo selezionato e rinumerato si deseleziona
+      selectedListItems: state.selectedListItems
+          .map((e) => items.firstWhereOrNull((item) => item.name == e.name))
+          .nonNulls
+          .toList(),
+    ));
+    await TransactionHandler.getInstance().runTransaction(transaction);
   }
 
   void incrementSorting() {
