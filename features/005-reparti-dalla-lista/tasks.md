@@ -9,5 +9,5 @@
 - [x] App: voce Add category nel pannello casa
 - [x] App: prove
 - [x] Prova sull'emulatore
-- [ ] Rilascio di server e APK
+- [x] Rilascio di server e APK
 - [ ] Prova sul campo di Andrea
