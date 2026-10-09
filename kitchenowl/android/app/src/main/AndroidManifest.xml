@@ -4,6 +4,8 @@
     <!--Permissions-->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Colpo di vibrazione all inizio del trascinamento (features/004) -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!--Queries-->
     <queries>

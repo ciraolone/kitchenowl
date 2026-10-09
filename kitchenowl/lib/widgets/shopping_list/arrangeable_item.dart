@@ -13,8 +13,8 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:kitchenowl/models/item.dart';
+import 'package:kitchenowl/services/strong_haptic.dart';
 
 class ItemArrangement<T extends Item> {
   final void Function(T item) onStart;
@@ -79,8 +79,8 @@ class _ArrangeableItemState<T extends Item> extends State<ArrangeableItem<T>>
           data: widget.item,
           feedback: Builder(builder: _buildFeedback),
           childWhenDragging: Opacity(opacity: 0.3, child: widget.child),
-          // Il "tac" lo dà _onDragStarted: quello di serie (selectionClick)
-          // su molti Android è così debole che non si sente
+          // Il colpo lo dà _onDragStarted: quello di serie (selectionClick)
+          // su molti Android è così debole che non si sente (strong_haptic.dart)
           hapticFeedbackOnStart: false,
           onDragStarted: _onDragStarted,
           onDragUpdate: _onDragUpdate,
@@ -104,7 +104,7 @@ class _ArrangeableItemState<T extends Item> extends State<ArrangeableItem<T>>
       );
 
   void _onDragStarted() {
-    HapticFeedback.heavyImpact();
+    strongHapticClick();
     _isDragging = true;
     _isArranging = false;
     _arrangement = widget.arrangement;
