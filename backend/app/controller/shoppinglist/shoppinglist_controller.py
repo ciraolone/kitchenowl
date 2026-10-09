@@ -347,7 +347,9 @@ def removeShoppinglistItem(args, id: int):
     shoppinglist.checkAuthorized()
 
     removed_at = args.get("changed_at", args.get("removed_at"))
-    if is_superseded(shoppinglist.id, args["item_id"], changed_at_to_datetime(removed_at)):
+    if is_superseded(
+        shoppinglist.id, args["item_id"], changed_at_to_datetime(removed_at)
+    ):
         return superseded_response(shoppinglist.id, args["item_id"])
     con = removeShoppinglistItemFunc(shoppinglist, args["item_id"], removed_at)
     if con:

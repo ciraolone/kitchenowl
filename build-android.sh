@@ -9,8 +9,8 @@ REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$REPO_DIR/kitchenowl"
 
 if [ ! -f "$SIGNING_DIR/key.properties" ] || [ ! -f "$SIGNING_DIR/kitchenowl.jks" ]; then
-  echo "Manca la chiave di firma in $SIGNING_DIR" >&2
-  exit 1
+	echo "Manca la chiave di firma in $SIGNING_DIR" >&2
+	exit 1
 fi
 
 upstream_version="$(grep -E '^version:' "$APP_DIR/pubspec.yaml" | sed -E 's/version: *([^+]+)\+([0-9]+)/\1 \2/')"
@@ -24,13 +24,13 @@ cp "$SIGNING_DIR/key.properties" "$APP_DIR/android/key.properties"
 trap 'rm -f "$APP_DIR/android/key.properties"' EXIT
 
 docker run --rm \
-  -v "$APP_DIR:/app" \
-  -v "$SIGNING_DIR:/firma:ro" \
-  -v kitchenowl-gradle-cache:/root/.gradle \
-  -v kitchenowl-pub-cache:/root/.pub-cache \
-  -w /app \
-  "$FLUTTER_IMAGE" \
-  sh -c "flutter pub get && flutter build apk --release --target-platform android-arm64 --build-name=$build_name --build-number=$build_number; status=\$?; chown -R $(id -u):$(id -g) /app/build /app/.dart_tool; exit \$status"
+	-v "$APP_DIR:/app" \
+	-v "$SIGNING_DIR:/firma:ro" \
+	-v kitchenowl-gradle-cache:/root/.gradle \
+	-v kitchenowl-pub-cache:/root/.pub-cache \
+	-w /app \
+	"$FLUTTER_IMAGE" \
+	sh -c "flutter pub get && flutter build apk --release --target-platform android-arm64 --build-name=$build_name --build-number=$build_number; status=\$?; chown -R $(id -u):$(id -g) /app/build /app/.dart_tool; exit \$status"
 
 mkdir -p "$REPO_DIR/dist"
 apk_path="$REPO_DIR/dist/kitchenowl-$build_name.apk"

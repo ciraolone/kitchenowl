@@ -38,7 +38,9 @@ def test_offline_check_off_older_than_a_server_re_add_is_discarded(
     checked_off_offline_at = now_ms() - MINUTE_MS
     item_id = add(client, shoppinglist_id, "Latte").get_json()["id"]
 
-    response = remove(client, shoppinglist_id, item_id, changed_at=checked_off_offline_at)
+    response = remove(
+        client, shoppinglist_id, item_id, changed_at=checked_off_offline_at
+    )
 
     assert response.status_code == 409
     assert response.get_json()["server_item"]["name"] == "Latte"
