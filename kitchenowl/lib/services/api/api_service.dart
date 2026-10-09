@@ -284,6 +284,13 @@ class ApiService {
     bool refreshOnException = true,
     Duration? timeout,
   }) async {
+    // Il rinnovo dell'accesso (per esempio al ritorno in primo piano dopo
+    // aver scelto una foto) invalida subito la chiave vecchia sul server: chi
+    // parte durante il rinnovo lo aspetta, altrimenti viene rifiutato e
+    // ritentato secondi dopo. La verifica di salute fa parte del rinnovo e
+    // non può aspettarlo: è l'unica chiamata con refreshOnException false.
+    final renewal = _refreshThread;
+    if (refreshOnException && renewal != null) await renewal;
     try {
       http.Response response = await request().timeout(timeout ?? _TIMEOUT);
 

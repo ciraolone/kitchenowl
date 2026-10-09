@@ -8,7 +8,10 @@
 //     icona matita = rinomina, in modalita' modifica appare il cestino.
 //
 // La modalita' modifica si attiva con il pulsante "Modifica" in app bar
-// (gestito dalla pagina contenitore) e cambia "isEditing" nel cubit.
+// (gestito dalla pagina contenitore) e cambia "isEditing" nel cubit. Una
+// foto si elimina anche dalla lightbox, col cestino in alto: senza passare
+// dalla modalita' modifica non si trovava (bug del 2026-10-09). Mentre una
+// foto o un PDF si carica compare una barra di avanzamento.
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -39,7 +42,8 @@ class ItemAttachmentsSection extends StatelessWidget {
     return BlocBuilder<ItemEditCubit, ItemEditState>(
       buildWhen: (prev, curr) =>
           prev.attachments != curr.attachments ||
-          prev.isEditing != curr.isEditing,
+          prev.isEditing != curr.isEditing ||
+          prev.isUploading != curr.isUploading,
       builder: (context, state) {
         final cubit = context.read<ItemEditCubit>();
         return Padding(
@@ -57,14 +61,19 @@ class ItemAttachmentsSection extends StatelessWidget {
               _PhotoGrid(
                 photos: state.photos,
                 isEditing: state.isEditing,
-                onOpen: (att) => _openLightbox(context, att),
+                onOpen: (att) => _openLightbox(context, cubit, att),
                 onDelete: (att) => cubit.deleteAttachment(att),
                 onReorder: (newOrder) => cubit.reorderAttachments(
                   ItemAttachmentKind.photo,
                   newOrder,
                 ),
               ),
-              if (state.photos.length < 20)
+              if (state.isUploading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: LinearProgressIndicator(),
+                ),
+              if (state.photos.length < 20 && !state.isUploading)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: TextButton.icon(
@@ -87,7 +96,7 @@ class ItemAttachmentsSection extends StatelessWidget {
                 onRename: (att) => _renamePdf(context, cubit, att),
                 onDelete: (att) => cubit.deleteAttachment(att),
               ),
-              if (state.pdfs.length < 10)
+              if (state.pdfs.length < 10 && !state.isUploading)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: TextButton.icon(
@@ -114,12 +123,17 @@ class ItemAttachmentsSection extends StatelessWidget {
     await cubit.addAttachmentBytes(file, ItemAttachmentKind.photo);
   }
 
-  void _openLightbox(BuildContext context, ItemAttachment att) {
+  void _openLightbox(
+    BuildContext context,
+    ItemEditCubit cubit,
+    ItemAttachment att,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PhotoViewPage(
           imageProvider: getImageProvider(context, att.filename),
           heroTag: 'item_attachment_${att.id}',
+          onDelete: () => cubit.deleteAttachment(att),
         ),
       ),
     );

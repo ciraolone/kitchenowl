@@ -84,21 +84,33 @@ class ItemEditCubit<T extends Item> extends Cubit<ItemEditState> {
     String? label,
   }) async {
     if (_item.id == null) return false;
-    final filename = await ApiService.getInstance().uploadBytes(file);
-    if (filename == null) return false;
+    emit(state.copyWith(isUploading: true));
+    final created = await _uploadAttachment(file, kind, label);
+    // La pagina può essere stata chiusa durante il caricamento: l'allegato
+    // c'è comunque sul server e la prossima apertura lo mostra
+    if (isClosed) return created != null;
+    emit(state.copyWith(
+      isUploading: false,
+      attachments: created == null
+          ? null
+          : (List<ItemAttachment>.from(state.attachments)..add(created)),
+    ));
+    return created != null;
+  }
 
-    final created = await ApiService.getInstance().addItemAttachment(
+  Future<ItemAttachment?> _uploadAttachment(
+    NamedByteArray file,
+    ItemAttachmentKind kind,
+    String? label,
+  ) async {
+    final filename = await ApiService.getInstance().uploadBytes(file);
+    if (filename == null) return null;
+    return ApiService.getInstance().addItemAttachment(
       _item,
       filename,
       kind,
       label: label,
     );
-    if (created == null) return false;
-
-    emit(state.copyWith(
-      attachments: List<ItemAttachment>.from(state.attachments)..add(created),
-    ));
-    return true;
   }
 
   Future<bool> deleteAttachment(ItemAttachment attachment) async {
@@ -107,7 +119,7 @@ class ItemEditCubit<T extends Item> extends Cubit<ItemEditState> {
       _item,
       attachment,
     );
-    if (!ok) return false;
+    if (!ok || isClosed) return ok;
     emit(state.copyWith(
       attachments:
           state.attachments.where((a) => a.id != attachment.id).toList(),
@@ -244,6 +256,8 @@ class ItemEditState extends Equatable {
   final List<ItemAttachment> attachments;
   // Modalita' modifica attiva: la UI mostra maniglie di drag e cestini.
   final bool isEditing;
+  // Un allegato si sta caricando: la UI mostra l'avanzamento.
+  final bool isUploading;
 
   const ItemEditState({
     this.name = "",
@@ -254,6 +268,7 @@ class ItemEditState extends Equatable {
     this.hasMerged = false,
     this.attachments = const [],
     this.isEditing = false,
+    this.isUploading = false,
   });
 
   // Comodo: foto ordinate per "ordering" (la prima e' la copertina).
@@ -275,6 +290,7 @@ class ItemEditState extends Equatable {
     bool? hasMerged,
     List<ItemAttachment>? attachments,
     bool? isEditing,
+    bool? isUploading,
   }) =>
       ItemEditState(
         name: name ?? this.name,
@@ -285,6 +301,7 @@ class ItemEditState extends Equatable {
         hasMerged: hasMerged ?? this.hasMerged,
         attachments: attachments ?? this.attachments,
         isEditing: isEditing ?? this.isEditing,
+        isUploading: isUploading ?? this.isUploading,
       );
 
   @override
@@ -297,6 +314,7 @@ class ItemEditState extends Equatable {
         hasMerged,
         attachments,
         isEditing,
+        isUploading,
       ];
 
   bool hasChanged(Item comparedTo) =>
