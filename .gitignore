@@ -137,3 +137,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# APK compilati da build-android.sh
+/dist/

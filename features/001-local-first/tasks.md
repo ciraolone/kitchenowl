@@ -12,9 +12,9 @@
 
 ## Compilazione Android
 
-- [ ] Immagine Docker di compilazione (Flutter + Android SDK)
-- [ ] Chiave di firma in `~/services/kitchenowl/firma-android/` e configurazione di firma nel progetto Android
-- [ ] Prima compilazione dell'APK invariato, per verificare che la catena funzioni prima di toccare l'app
+- [x] Compilazione in container Flutter + Android SDK (`build-android.sh`, immagine cirruslabs già pronta)
+- [x] Chiave di firma in `~/services/kitchenowl/firma-android/` e configurazione di firma nel progetto Android
+- [x] Prima compilazione dell'APK invariato, per verificare che la catena funzioni prima di toccare l'app
 
 ## App
 
