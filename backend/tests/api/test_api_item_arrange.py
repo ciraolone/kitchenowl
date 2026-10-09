@@ -107,7 +107,10 @@ def test_nightly_analysis_keeps_a_drag_made_after_the_last_shopping(
     for minute, name in enumerate(names):
         client.delete(
             f"/api/shoppinglist/{shoppinglist_id}/item",
-            json={"item_id": item_ids[name], "changed_at": shopping_started_at + minute * 60_000},
+            json={
+                "item_id": item_ids[name],
+                "changed_at": shopping_started_at + minute * 60_000,
+            },
         )
     daily()
     assert route_of(item_ids) == names
