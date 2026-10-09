@@ -15,6 +15,10 @@ class SearchTextField extends StatefulWidget {
   final String? hintText;
   final Widget? suffix;
 
+  /// Fuoco del campo dato da fuori, per attivarlo da codice (scorciatoia
+  /// "Aggiungi articolo"). Se manca il campo ne crea uno suo.
+  final FocusNode? focusNode;
+
   /// Search dealy in milliseconds.
   /// Set it to 0 to remove the debouncer
   final int searchDelay;
@@ -32,6 +36,7 @@ class SearchTextField extends StatefulWidget {
     this.labelText,
     this.hintText,
     this.suffix,
+    this.focusNode,
   });
 
   @override
@@ -51,7 +56,7 @@ class _SearchTextFieldState extends State<SearchTextField> {
     widget.controller.addListener(_onControllerChanged);
     _debouncer =
         Debouncer(duration: Duration(milliseconds: widget.searchDelay));
-    focusNode = FocusNode();
+    focusNode = widget.focusNode ?? FocusNode();
     expanded = widget.alwaysExpanded;
     if (!widget.alwaysExpanded) {
       focusNode.addListener(() {
@@ -65,7 +70,7 @@ class _SearchTextFieldState extends State<SearchTextField> {
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
-    focusNode.dispose();
+    if (widget.focusNode == null) focusNode.dispose();
     super.dispose();
   }
 

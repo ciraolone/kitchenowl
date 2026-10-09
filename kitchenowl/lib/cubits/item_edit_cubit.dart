@@ -9,7 +9,6 @@ import 'package:kitchenowl/models/item_attachment.dart';
 import 'package:kitchenowl/models/recipe.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
-import 'package:kitchenowl/services/api/item.dart';
 import 'package:kitchenowl/services/transaction_handler.dart';
 import 'package:kitchenowl/services/transactions/item.dart';
 import 'package:kitchenowl/services/transactions/shoppinglist.dart';

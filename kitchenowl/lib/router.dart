@@ -90,6 +90,26 @@ final router = GoRouter(
         return null;
       },
     ),
+    // Destinazione della scorciatoia "Aggiungi articolo" del launcher
+    // Android (res/xml/shortcuts.xml, features/002-scorciatoia-aggiungi).
+    // Il parametro add cambia a ogni tocco: con un indirizzo identico a
+    // quello già aperto il router non ricostruisce nulla e la lista non
+    // ridarebbe il fuoco al campo di ricerca.
+    GoRoute(
+      path: '/add-item',
+      redirect: (context, state) async {
+        final id = await PreferenceStorage.getInstance()
+            .readInt(key: 'lastHouseholdId');
+        if (id == null) return "/household";
+
+        return Uri(
+          path: "/household/$id/items",
+          queryParameters: {
+            "add": DateTime.now().millisecondsSinceEpoch.toString(),
+          },
+        ).toString();
+      },
+    ),
     GoRoute(
       path: '/setup',
       pageBuilder: (context, state) => SharedAxisTransitionPage(

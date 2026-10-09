@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Traduzione italiana di values/strings.xml. -->
+<resources>
+    <string name="shortcut_add_item">Aggiungi articolo</string>
+</resources>

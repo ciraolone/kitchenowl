@@ -9,6 +9,7 @@ import 'package:kitchenowl/cubits/settings_cubit.dart';
 import 'package:kitchenowl/cubits/shoppinglist_cubit.dart';
 import 'package:kitchenowl/enums/shoppinglist_sorting.dart';
 import 'package:kitchenowl/models/item.dart';
+import 'package:kitchenowl/pages/household_page/add_item_shortcut_focus.dart';
 import 'package:kitchenowl/kitchenowl.dart';
 import 'package:kitchenowl/widgets/choice_scroll.dart';
 import 'package:kitchenowl/widgets/shopping_list/shopping_list_choice_chip.dart';
@@ -23,8 +24,10 @@ class ShoppinglistPage extends StatefulWidget {
   _ShoppinglistPageState createState() => _ShoppinglistPageState();
 }
 
-class _ShoppinglistPageState extends State<ShoppinglistPage> {
+class _ShoppinglistPageState extends State<ShoppinglistPage>
+    with AddItemShortcutFocus {
   final TextEditingController searchController = TextEditingController();
+  final FocusNode searchFocusNode = FocusNode();
   StreamSubscription<List<String>>? _supersededSubscription;
 
   @override
@@ -44,7 +47,14 @@ class _ShoppinglistPageState extends State<ShoppinglistPage> {
     WakelockPlus.disable();
     _supersededSubscription?.cancel();
     searchController.dispose();
+    searchFocusNode.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    focusOnAddItemShortcut(searchFocusNode);
   }
 
   // Modifiche fatte sul telefono che il server ha scartato perché ne aveva
@@ -84,6 +94,7 @@ class _ShoppinglistPageState extends State<ShoppinglistPage> {
                 },
                 child: SearchTextField(
                   controller: searchController,
+                  focusNode: searchFocusNode,
                   onSearch: (s) => cubit.search(s),
                   onSubmitted: () {
                     final state = cubit.state;

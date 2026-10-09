@@ -10,7 +10,6 @@
 // La modalita' modifica si attiva con il pulsante "Modifica" in app bar
 // (gestito dalla pagina contenitore) e cambia "isEditing" nel cubit.
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';

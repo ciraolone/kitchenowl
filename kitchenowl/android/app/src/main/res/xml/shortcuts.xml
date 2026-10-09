@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Scorciatoie del launcher (tieni premuta l'icona). "Aggiungi articolo" apre il link interno kitchenowl://app/add-item, che il router Flutter trasforma nella lista della spesa dell'ultima casa con il campo di ricerca attivo (features/002-scorciatoia-aggiungi). targetPackage deve restare uguale all'applicationId di build.gradle, altrimenti il launcher scarta la scorciatoia. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_item"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add_item"
+        android:shortcutShortLabel="@string/shortcut_add_item">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="kitchenowl://app/add-item"
+            android:targetPackage="com.tombursch.kitchenowl"
+            android:targetClass="com.tombursch.kitchenowl.MainActivity" />
+    </shortcut>
+</shortcuts>
