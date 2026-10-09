@@ -9,6 +9,7 @@ class GetShoppingLists(Schema):
 class AddItemByName(Schema):
     name = fields.String(required=True)
     description = fields.String()
+    changed_at = fields.Integer()
 
 
 class AddRecipeItems(Schema):
@@ -43,6 +44,7 @@ class GetRecentItems(Schema):
 
 class UpdateDescription(Schema):
     description = fields.String(required=True)
+    changed_at = fields.Integer()
 
 
 class RemoveItem(Schema):
@@ -50,6 +52,7 @@ class RemoveItem(Schema):
         required=True,
     )
     removed_at = fields.Integer()
+    changed_at = fields.Integer()
 
 
 class RemoveItems(Schema):
@@ -61,5 +64,6 @@ class RemoveItems(Schema):
             required=True,
         )
         removed_at = fields.Integer()
+        changed_at = fields.Integer()
 
     items = fields.List(fields.Nested(RecipeItem))

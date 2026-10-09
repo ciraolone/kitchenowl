@@ -26,6 +26,11 @@ from app.errors import NotFoundRequest, InvalidUsage
 from datetime import datetime, timedelta, timezone
 import app.util.description_merger as description_merger
 from app import socketio
+from app.service.shoppinglist_change_order import (
+    changed_at_to_datetime,
+    is_superseded,
+    superseded_response,
+)
 
 
 shoppinglist = Blueprint("shoppinglist", __name__)
@@ -127,6 +132,14 @@ def deleteShoppinglist(id):
 @jwt_required()
 @validate_args(UpdateDescription)
 def updateItemDescription(args, id: int, item_id: int):
+    changed_at = changed_at_to_datetime(args.get("changed_at"))
+    if is_superseded(id, item_id, changed_at):
+        # chi ha un'azione superata vede comunque lo stato del server: va autorizzato
+        shoppinglist = Shoppinglist.find_by_id(id)
+        if not shoppinglist:
+            raise NotFoundRequest()
+        shoppinglist.checkAuthorized()
+        return superseded_response(id, item_id)
     con = ShoppinglistItems.find_by_ids(id, item_id)
     if not con:
         shoppinglist = Shoppinglist.find_by_id(id)
@@ -142,6 +155,8 @@ def updateItemDescription(args, id: int, item_id: int):
     con.shoppinglist.checkAuthorized()
 
     con.description = args["description"] or ""
+    if changed_at:
+        con.updated_at = changed_at
     con.save()
     socketio.emit(
         "shoppinglist_item:add",
@@ -289,7 +304,10 @@ def addShoppinglistItemByName(args, id):
         raise NotFoundRequest()
     shoppinglist.checkAuthorized()
 
+    changed_at = changed_at_to_datetime(args.get("changed_at"))
     item = Item.find_by_name(shoppinglist.household_id, args["name"])
+    if item and is_superseded(shoppinglist.id, item.id, changed_at):
+        return superseded_response(shoppinglist.id, item.id)
     if not item:
         item = Item.create_by_name(shoppinglist.household_id, args["name"])
 
@@ -300,9 +318,12 @@ def addShoppinglistItemByName(args, id):
         con.created_by = current_user.id
         con.item = item
         con.shoppinglist = shoppinglist
+        if changed_at:
+            con.created_at = changed_at
+            con.updated_at = changed_at
         con.save()
 
-        History.create_added(shoppinglist, item, description)
+        History.create_added(shoppinglist, item, description, changed_at)
 
         socketio.emit(
             "shoppinglist_item:add",
@@ -325,11 +346,10 @@ def removeShoppinglistItem(args, id: int):
         raise NotFoundRequest()
     shoppinglist.checkAuthorized()
 
-    con = removeShoppinglistItemFunc(
-        shoppinglist,
-        args["item_id"],
-        args["removed_at"] if "removed_at" in args else None,
-    )
+    removed_at = args.get("changed_at", args.get("removed_at"))
+    if is_superseded(shoppinglist.id, args["item_id"], changed_at_to_datetime(removed_at)):
+        return superseded_response(shoppinglist.id, args["item_id"])
+    con = removeShoppinglistItemFunc(shoppinglist, args["item_id"], removed_at)
     if con:
         socketio.emit(
             "shoppinglist_item:remove",
@@ -352,12 +372,15 @@ def removeShoppinglistItems(args, id: int):
         raise NotFoundRequest()
     shoppinglist.checkAuthorized()
 
+    superseded_item_ids = []
     for arg in args["items"]:
-        con = removeShoppinglistItemFunc(
-            shoppinglist,
-            arg["item_id"],
-            arg["removed_at"] if "removed_at" in arg else None,
-        )
+        removed_at = arg.get("changed_at", arg.get("removed_at"))
+        if is_superseded(
+            shoppinglist.id, arg["item_id"], changed_at_to_datetime(removed_at)
+        ):
+            superseded_item_ids.append(arg["item_id"])
+            continue
+        con = removeShoppinglistItemFunc(shoppinglist, arg["item_id"], removed_at)
         if con:
             socketio.emit(
                 "shoppinglist_item:remove",
@@ -368,7 +391,7 @@ def removeShoppinglistItems(args, id: int):
                 to="household/" + str(shoppinglist.household_id),
             )
 
-    return jsonify({"msg": "DONE"})
+    return jsonify({"msg": "DONE", "superseded_item_ids": superseded_item_ids})
 
 
 def removeShoppinglistItemFunc(

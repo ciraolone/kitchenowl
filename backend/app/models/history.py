@@ -51,18 +51,23 @@ class History(Model):
 
     @classmethod
     def create_added_without_save(
-        cls, shoppinglist, item, description: str = ""
+        cls, shoppinglist, item, description: str = "", created_at=None
     ) -> Self:
         return cls(
             shoppinglist_id=shoppinglist.id,
             item_id=item.id,
             status=Status.ADDED,
             description=description,
+            created_at=created_at,
         )
 
     @classmethod
-    def create_added(cls, shoppinglist, item, description: str = "") -> Self:
-        return cls.create_added_without_save(shoppinglist, item, description).save()
+    def create_added(
+        cls, shoppinglist, item, description: str = "", created_at=None
+    ) -> Self:
+        return cls.create_added_without_save(
+            shoppinglist, item, description, created_at
+        ).save()
 
     @classmethod
     def create_dropped(

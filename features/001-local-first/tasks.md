@@ -4,10 +4,10 @@
 
 ## Backend
 
-- [ ] `changed_at` opzionale su aggiunta, modifica descrizione e rimozione (singola e multipla), con `removed_at` ancora accettato
-- [ ] Regola "vince il più recente" per articolo e risposta `applied: true/false` con lo stato attuale
-- [ ] Cronologia datata con `changed_at`
-- [ ] Test API: azione superata scartata, azione più recente applicata, chiamate senza `changed_at` invariate, data della spunta presa da `changed_at`
+- [x] `changed_at` opzionale su aggiunta, modifica descrizione e rimozione (singola e multipla), con `removed_at` ancora accettato
+- [x] Regola "vince il più recente" per articolo, risposta `409` con lo stato del server
+- [x] Cronologia datata con `changed_at`
+- [x] Test API: azione superata scartata, azione più recente applicata, chiamate senza `changed_at` invariate, data della spunta presa da `changed_at`
 - [ ] Ricompilare l'immagine del server e riavviare il container
 
 ## Compilazione Android
@@ -24,7 +24,7 @@
 - [ ] Coda persistente sempre attiva con un unico postino; scrittura locale immediata
 - [ ] `changed_at` su ogni transazione della lista
 - [ ] Niente `refresh` dopo `add` e `remove`
-- [ ] Gestione `applied: false`: riallineo dell'articolo e avviso con il nome
+- [ ] Gestione della risposta `409`: riallineo dell'articolo e avviso con il nome
 - [ ] Niente scadenza dei tre giorni per le transazioni della lista
 - [ ] Test unitari su coda, regola di riallineo e ricerca locale
 
