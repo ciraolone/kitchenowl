@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart' as pathProvider;
 
 class TransactionStorage {
   static TransactionStorage? _instance;
+  Future<void> _lastUpdate = Future.value();
 
   TransactionStorage._internal();
   static TransactionStorage getInstance() {
@@ -51,23 +52,28 @@ class TransactionStorage {
     }
   }
 
-  Future<void> setTransaction(List<Transaction> transactions) async {
-    if (!kIsWeb) {
-      final file = await _localFile;
-      await file.writeAsString(
-        json.encode(transactions.map((t) => t.toJson()).toList()),
-      );
-    }
-  }
+  Future<void> addTransaction(Transaction t) =>
+      _updateQueue((transactions) => transactions.add(t));
 
-  Future<void> addTransaction(Transaction t) async {
-    if (!kIsWeb) {
-      final transactions = (await readTransactions());
-      transactions.add(t);
+  /// Toglie una transazione consegnata. Si cerca per uguaglianza (classe e
+  /// momento) e non per posizione, perché mentre il postino consegnava
+  /// possono essere state accodate azioni nuove.
+  Future<void> removeTransaction(Transaction t) =>
+      _updateQueue((transactions) => transactions.remove(t));
+
+  // Ogni modifica legge, cambia e riscrive il file: le si mette in fila,
+  // altrimenti due modifiche quasi simultanee si sovrascriverebbero a vicenda
+  Future<void> _updateQueue(void Function(List<Transaction>) change) {
+    final update = _lastUpdate.then((_) async {
+      if (kIsWeb) return;
+      final transactions = await readTransactions();
+      change(transactions);
       final file = await _localFile;
       await file.writeAsString(
         json.encode(transactions.map((t) => t.toJson()).toList()),
       );
-    }
+    });
+    _lastUpdate = update.catchError((_) {});
+    return update;
   }
 }

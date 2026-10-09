@@ -19,6 +19,18 @@ extension ItemApi on ApiService {
     return body.map((e) => Item.fromJson(e)).toList();
   }
 
+  /// Catalogo completo della casa come mappe JSON grezze: a differenza di
+  /// getAllItems conserva "support", che serve alla ricerca sul telefono
+  /// (services/local_first/catalog_search.dart).
+  Future<List<Map<String, dynamic>>?> getAllItemsJson(
+    Household household,
+  ) async {
+    final res = await get('${householdPath(household)}$baseRoute');
+    if (res.statusCode != 200) return null;
+
+    return List<Map<String, dynamic>>.from(jsonDecode(res.body));
+  }
+
   Future<Item?> getItem(Item item) async {
     final res = await get('$baseRoute/${item.id}');
     if (res.statusCode != 200) return null;

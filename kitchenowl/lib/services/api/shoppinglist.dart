@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
+
 import 'package:kitchenowl/enums/shoppinglist_sorting.dart';
 import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/models/item.dart';
@@ -62,35 +64,43 @@ extension ShoppinglistApi on ApiService {
     return res.statusCode == 200;
   }
 
-  Future<bool> putItem(
+  // Le quattro chiamate che cambiano gli articoli della lista restituiscono la
+  // risposta intera: la coda local first (TransactionHandler) deve distinguere
+  // consegnato (200), superato da una modifica più recente (409), rifiutato e
+  // da riprovare. changedAt è il momento in cui Andrea ha fatto l'azione sul
+  // telefono: il backend lo usa per decidere chi vince nelle sovrapposizioni.
+  Future<http.Response> putItem(
     ShoppingList shoppinglist,
     Item item,
-  ) async {
-    final Map<String, dynamic> data = {};
+    DateTime changedAt,
+  ) {
+    final Map<String, dynamic> data = {
+      'changed_at': changedAt.toUtc().millisecondsSinceEpoch,
+    };
     if (item is ItemWithDescription) {
       data['description'] = item.description;
     }
-    final res = await put(
+    return put(
       '${route(shoppinglist: shoppinglist)}/item/${item.id}',
       jsonEncode(data),
     );
-
-    return res.statusCode == 200;
   }
 
-  Future<bool> addItemByName(
+  Future<http.Response> addItemByName(
     ShoppingList shoppinglist,
-    String name, [
+    String name,
     String? description,
-  ]) async {
-    final data = {'name': name};
+    DateTime changedAt,
+  ) {
+    final data = <String, dynamic>{
+      'name': name,
+      'changed_at': changedAt.toUtc().millisecondsSinceEpoch,
+    };
     if (description != null) data['description'] = description;
-    final res = await post(
+    return post(
       '${route(shoppinglist: shoppinglist)}/add-item-by-name',
       jsonEncode(data),
     );
-
-    return res.statusCode == 200;
   }
 
   Future<bool> addRecipeItems(
@@ -105,43 +115,38 @@ extension ShoppinglistApi on ApiService {
     return res.statusCode == 200;
   }
 
-  Future<bool> removeItem(
+  Future<http.Response> removeItem(
     ShoppingList shoppinglist,
-    ShoppinglistItem item, [
-    DateTime? time,
-  ]) async {
-    final res = await delete(
+    int itemId,
+    DateTime changedAt,
+  ) {
+    return delete(
       '${route(shoppinglist: shoppinglist)}/item',
       body: jsonEncode({
-        'item_id': item.id,
-        if (time != null) 'removed_at': time.toUtc().millisecondsSinceEpoch,
+        'item_id': itemId,
+        'changed_at': changedAt.toUtc().millisecondsSinceEpoch,
       }),
     );
-
-    return res.statusCode == 200;
   }
 
-  Future<bool> removeItems(
+  Future<http.Response> removeItems(
     ShoppingList shoppinglist,
-    List<ShoppinglistItem> items, [
-    DateTime? time,
-  ]) async {
-    final res = await delete(
+    List<int> itemIds,
+    DateTime changedAt,
+  ) {
+    return delete(
       '${route(shoppinglist: shoppinglist)}/items',
       body: jsonEncode({
-        "items": items
+        "items": itemIds
             .map(
-              (item) => {
-                'item_id': item.id,
-                if (time != null)
-                  'removed_at': time.toUtc().millisecondsSinceEpoch,
+              (itemId) => {
+                'item_id': itemId,
+                'changed_at': changedAt.toUtc().millisecondsSinceEpoch,
               },
             )
             .toList(),
       }),
     );
-
-    return res.statusCode == 200;
   }
 
   void onShoppinglistAdd(dynamic Function(dynamic) handler) {

@@ -18,15 +18,15 @@
 
 ## App
 
-- [ ] Catalogo articoli nella copia persistente, aggiornato in sottofondo e dagli eventi socket
-- [ ] Ricerca dal catalogo locale, senza rete
-- [ ] Letture della lista sempre dalla copia locale, aggiornamento in sottofondo (apertura, ritorno in primo piano, riconnessione, eventi socket)
-- [ ] Coda persistente sempre attiva con un unico postino; scrittura locale immediata
-- [ ] `changed_at` su ogni transazione della lista
-- [ ] Niente `refresh` dopo `add` e `remove`
-- [ ] Gestione della risposta `409`: riallineo dell'articolo e avviso con il nome
-- [ ] Niente scadenza dei tre giorni per le transazioni della lista
-- [ ] Test unitari su coda, regola di riallineo e ricerca locale
+- [x] Catalogo articoli nella copia persistente, aggiornato in sottofondo e dagli eventi socket
+- [x] Ricerca dal catalogo locale, senza rete
+- [x] Letture della lista sempre dalla copia locale, aggiornamento in sottofondo (apertura, ritorno in primo piano, riconnessione, eventi socket)
+- [x] Coda persistente sempre attiva con un unico postino; scrittura locale immediata
+- [x] `changed_at` su ogni transazione della lista
+- [x] Niente `refresh` dopo `add` e `remove`
+- [x] Gestione della risposta `409`: riallineo dell'articolo e avviso con il nome
+- [x] Niente scadenza dei tre giorni per le transazioni della lista
+- [x] Test unitari su ricerca locale ed esito delle consegne (la coda e il riallineo dipendono da file e rete del telefono: si verificano nella prova sul campo)
 
 ## Consegna
 

@@ -465,6 +465,7 @@
   "setupTitle": "Ciao! Sei pronto/a a fare acquisti?",
   "share": "Condividi",
   "shoppingList": "Lista della spesa",
+  "shoppingListChangeSuperseded": "{items}: sul server c'è una modifica più recente, tenuta quella",
   "shoppingListContainsEntries": "{entriesCount, plural, =0{The shopping list contains no items.} =1{The shopping list contains 1 item.} other{The shopping list contains {entriesCount} items.}}",
   "shoppingListDelete": "Elimina la lista della spesa",
   "shoppingListDeleteConfirmation": "Sei sicuro/a di voler eliminare {shoppingList}?",

@@ -9,6 +9,8 @@ import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/models/item.dart';
 import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
+import 'package:kitchenowl/services/local_first/item_catalog.dart';
+import 'package:kitchenowl/services/local_first/shoppinglist_search.dart';
 import 'package:kitchenowl/services/storage/storage.dart';
 import 'package:kitchenowl/services/transactions/category.dart';
 import 'package:kitchenowl/services/transactions/shoppinglist.dart';
@@ -17,9 +19,10 @@ import 'package:kitchenowl/services/transaction_handler.dart';
 class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
   final Household household;
   Future<void>? _refreshThread;
-  String? _refreshCurrentQuery;
+  String _latestSearchQuery = '';
   Timer? _periodicRefreshTimer;
   Connection? _lastConnectionState;
+  StreamSubscription<List<String>>? _supersededSubscription;
 
   String get query => (state is SearchShoppinglistCubitState)
       ? (state as SearchShoppinglistCubitState).query
@@ -37,6 +40,12 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     });
     _initialLoad();
     refresh();
+    ItemCatalog.getInstance().refreshFromServer(household);
+    // Una modifica fatta sul telefono è stata superata da una più recente sul
+    // server: si riallinea la lista (l'avviso lo mostra la pagina)
+    _supersededSubscription = TransactionHandler.getInstance()
+        .supersededItems
+        .listen((_) => refresh());
     ApiService.getInstance().onShoppinglistAdd(onShoppinglistAdd);
     ApiService.getInstance().onShoppinglistDelete(onShoppinglistDelete);
     ApiService.getInstance().onShoppinglistItemAdd(onShoppinglistItemAdd);
@@ -62,6 +71,7 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     if (current == Connection.authenticated &&
         _lastConnectionState != Connection.authenticated) {
       refresh();
+      ItemCatalog.getInstance().refreshFromServer(household);
     }
     _lastConnectionState = current;
   }
@@ -69,6 +79,7 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
   @override
   Future<void> close() async {
     _periodicRefreshTimer?.cancel();
+    _supersededSubscription?.cancel();
     ApiService.getInstance().removeListener(_onConnectionChange);
     ApiService.getInstance().offShoppinglistAdd(onShoppinglistAdd);
     ApiService.getInstance().offShoppinglistDelete(onShoppinglistDelete);
@@ -88,6 +99,8 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
 
   void onShoppinglistItemAdd(dynamic data) {
     final item = ShoppinglistItem.fromJson(data["item"]);
+    ItemCatalog.getInstance()
+        .remember(household, Map<String, dynamic>.from(data["item"]));
     TransactionHandler.getInstance().runTransaction(
       TransactionShoppingListAddItem(
         household: household,
@@ -117,7 +130,43 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     removeLocally(item, data["shoppinglist"]["id"]);
   }
 
-  Future<void> search(String query) => refresh(query: query);
+  /// Ricerca tutta sul telefono, nessuna richiesta di rete (feature
+  /// 001-local-first). Se nel frattempo è partita una ricerca più nuova, il
+  /// risultato di questa si scarta.
+  Future<void> search(String query) async {
+    _latestSearchQuery = query;
+    if (query.trim().isEmpty) {
+      _leaveSearch();
+      return;
+    }
+    final result = await searchShoppinglistLocally(
+      household,
+      query,
+      state.selectedShoppinglist,
+    );
+    if (query != _latestSearchQuery) return;
+    emit(SearchShoppinglistCubitState(
+      shoppinglists: state.shoppinglists,
+      selectedShoppinglistId: state.selectedShoppinglistId,
+      categories: state.categories,
+      sorting: state.sorting,
+      selectedListItems: state.selectedListItems,
+      query: query,
+      result: result,
+    ));
+  }
+
+  void _leaveSearch() {
+    _latestSearchQuery = '';
+    if (state is! SearchShoppinglistCubitState) return;
+    emit(ShoppinglistCubitState(
+      shoppinglists: state.shoppinglists,
+      selectedShoppinglistId: state.selectedShoppinglistId,
+      categories: state.categories,
+      sorting: state.sorting,
+      selectedListItems: state.selectedListItems,
+    ));
+  }
 
   Future<void> add(Item item) async {
     final _state = state;
@@ -129,7 +178,7 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
       shoppinglist: _state.selectedShoppinglist!,
       item: item,
     ));
-    await refresh(query: '');
+    _leaveSearch();
   }
 
   void addLocally(ShoppinglistItem item, [int? shoppinglistId]) {
@@ -315,21 +364,16 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     ));
   }
 
+  /// Allinea la copia sul telefono al server, in sottofondo: lo schermo
+  /// mostra già la copia locale e non aspetta mai questa chiamata. Prima si
+  /// consegnano le azioni in coda, poi si scarica la lista dal server e ci si
+  /// riapplicano sopra le azioni ancora non consegnate. Con query == '' si
+  /// esce anche dalla ricerca. Più chiamate ravvicinate condividono la stessa
+  /// sincronizzazione.
   Future<void> refresh({String? query}) {
-    final state = this.state;
-    if (state is SearchShoppinglistCubitState) {
-      query = query ?? state.query;
-    }
-    if (_refreshThread != null && query != _refreshCurrentQuery) {
-      _refreshCurrentQuery = query;
-      _refreshThread = _refresh(query);
-    }
-    if (_refreshThread == null) {
-      _refreshCurrentQuery = query;
-      _refreshThread = _refresh(query);
-    }
-
-    return _refreshThread!;
+    if (query != null && query.isEmpty) _leaveSearch();
+    return _refreshThread ??=
+        _refresh().whenComplete(() => _refreshThread = null);
   }
 
   Future<Map<int, ShoppingList>> fetchShoppingLists(
@@ -376,7 +420,9 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
 
     Future<List<Category>> categories = fetchCategories(true);
 
-    final resState = LoadingShoppinglistCubitState(
+    // La copia locale è già la lista vera (feature 001-local-first): si
+    // mostra come pronta, senza segnaposto di caricamento
+    final resState = ShoppinglistCubitState(
       shoppinglists: shoppingLists,
       selectedShoppinglistId: shoppingList.id,
       categories: await categories,
@@ -393,23 +439,20 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     }
   }
 
-  Future<void> _refresh([String? query]) async {
-    // Get required information
-    late ShoppinglistCubitState resState;
-    if (state.selectedShoppinglistId == null ||
-        (state.selectedShoppinglist?.items.isEmpty ?? true) &&
-            (state.selectedShoppinglist?.recentItems.isEmpty ?? true) &&
-            (query == null || query.isEmpty)) {
+  Future<void> _refresh() async {
+    if (state.selectedShoppinglistId == null &&
+        state is! LoadingShoppinglistCubitState) {
       emit(LoadingShoppinglistCubitState(
-        selectedShoppinglistId: state.selectedShoppinglistId,
-        shoppinglists: state.shoppinglists,
         sorting: state.sorting,
         categories: state.categories,
-        selectedListItems: state.selectedListItems,
       ));
     }
 
-    final shoppingLists = await fetchShoppingLists();
+    await TransactionHandler.getInstance().runOpenTransactions();
+    final categories = fetchCategories();
+    await fetchShoppingLists();
+    await TransactionHandler.getInstance().replayPending(household);
+    final shoppingLists = await fetchShoppingLists(true);
 
     int? selectedShoppinglistId = state.selectedShoppinglistId;
     if (selectedShoppinglistId != null &&
@@ -417,93 +460,37 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
       selectedShoppinglistId = null;
     }
     selectedShoppinglistId ??= shoppingLists.values.firstOrNull?.id;
-
     if (selectedShoppinglistId == null) return;
-
     final shoppinglist = shoppingLists[selectedShoppinglistId];
 
-    Future<List<Category>> categories = fetchCategories();
-
-    if (query != null && query.isNotEmpty) {
-      // Split query into name and description
-      final splitIndex = query.indexOf(',');
-      String queryName = query.trim();
-      String? queryDescription;
-      if (splitIndex >= 0) {
-        queryName = query.substring(0, splitIndex).trim();
-        queryDescription = query.substring(splitIndex + 1).trim();
-      }
-
-      Future<List<Item>> searchItems = TransactionHandler.getInstance()
-          .runTransaction(
-            TransactionShoppingListSearchItem(
-              household: household,
-              query: queryName,
-            ),
-          )
-          .then((items) => items
-              .map((e) => ItemWithDescription.fromItem(
-                    item: e,
-                    description: queryDescription,
-                  ))
-              .toList());
-
-      List<Item> loadedItems = await searchItems;
-
-      _mergeShoppinglistItems(loadedItems, shoppinglist?.items);
-      if (loadedItems.isEmpty ||
-          !loadedItems
-              .any((e) => e.name.toLowerCase() == queryName.toLowerCase())) {
-        loadedItems.add(ItemWithDescription(
-          name: queryName,
-          description: queryDescription ?? '',
-        ));
-      }
-      resState = SearchShoppinglistCubitState(
-        shoppinglists: shoppingLists,
-        selectedShoppinglistId: selectedShoppinglistId,
-        result: loadedItems,
-        query: query,
-        categories: await categories,
-        sorting: state.sorting,
-        selectedListItems: state.selectedListItems
-            .map((e) =>
-                shoppinglist?.items.firstWhereOrNull((item) => item.id == e.id))
-            .nonNulls
-            .toList(),
-      );
-    } else {
-      resState = ShoppinglistCubitState(
+    final selectedListItems = state.selectedListItems
+        .map((e) =>
+            shoppinglist?.items.firstWhereOrNull((item) => item.id == e.id))
+        .nonNulls
+        .toList();
+    final current = state;
+    // Durante una ricerca si resta in ricerca: uno stato normale farebbe
+    // svuotare la casella di ricerca alla pagina mentre Andrea scrive
+    if (current is SearchShoppinglistCubitState) {
+      emit(SearchShoppinglistCubitState(
         shoppinglists: shoppingLists,
         selectedShoppinglistId: selectedShoppinglistId,
         categories: await categories,
-        sorting: state.sorting,
-        selectedListItems: state.selectedListItems
-            .map((e) =>
-                shoppinglist?.items.firstWhereOrNull((item) => item.id == e.id))
-            .nonNulls
-            .toList(),
-      );
+        sorting: current.sorting,
+        selectedListItems: selectedListItems,
+        query: current.query,
+        result: current.result,
+      ));
+      await search(current.query);
+      return;
     }
-    if (query == _refreshCurrentQuery) {
-      emit(resState);
-      _refreshThread = null;
-    }
-  }
-
-  void _mergeShoppinglistItems(
-    List<Item> items,
-    List<ShoppinglistItem>? shoppinglist,
-  ) {
-    if (shoppinglist == null || shoppinglist.isEmpty) return;
-    for (int i = 0; i < items.length; i++) {
-      final shoppinglistItem =
-          shoppinglist.firstWhereOrNull((e) => e.id == items[i].id);
-      if (shoppinglistItem != null) {
-        items.removeAt(i);
-        items.insert(i, shoppinglistItem);
-      }
-    }
+    emit(ShoppinglistCubitState(
+      shoppinglists: shoppingLists,
+      selectedShoppinglistId: selectedShoppinglistId,
+      categories: await categories,
+      sorting: current.sorting,
+      selectedListItems: selectedListItems,
+    ));
   }
 
   Map<int, ShoppingList> _replaceAndUpdateShoppingLists(

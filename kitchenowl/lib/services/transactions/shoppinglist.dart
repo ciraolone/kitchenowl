@@ -6,6 +6,8 @@ import 'package:kitchenowl/models/shoppinglist.dart';
 import 'package:kitchenowl/services/storage/mem_storage.dart';
 import 'package:kitchenowl/services/transaction.dart';
 import 'package:kitchenowl/services/api/api_service.dart';
+import 'package:kitchenowl/services/local_first/delivery.dart';
+import 'package:kitchenowl/services/local_first/shoppinglist_delivery.dart';
 
 class TransactionShoppingListGet extends Transaction<List<ShoppingList>> {
   final Household household;
@@ -77,7 +79,9 @@ class TransactionShoppingListSearchItem extends Transaction<List<Item>> {
   }
 }
 
-class TransactionShoppingListAddItem extends Transaction<bool> {
+class TransactionShoppingListAddItem extends Transaction<bool>
+    with LocalFirstTransaction<bool> {
+  @override
   final Household household;
   final ShoppingList shoppinglist;
   final Item item;
@@ -121,6 +125,9 @@ class TransactionShoppingListAddItem extends Transaction<bool> {
     final latestShoppingList =
         shoppingLists.where((e) => e.id == shoppinglist.id).firstOrNull;
     if (latestShoppingList == null) return false;
+    // Idempotente: le azioni in coda si riapplicano sopra ogni copia fresca
+    // del server (TransactionHandler.replayPending), anche se già consegnate
+    latestShoppingList.items.removeWhere((e) => e.name == item.name);
     latestShoppingList.items.add(ShoppinglistItem.fromItem(item: item));
     latestShoppingList.recentItems
         .removeWhere((item) => item.name == this.item.name);
@@ -130,25 +137,21 @@ class TransactionShoppingListAddItem extends Transaction<bool> {
   }
 
   @override
-  Future<bool?> runOnline() {
-    if (item.id != null) {
-      return ApiService.getInstance().putItem(
-        shoppinglist,
-        item,
+  Future<Delivery> deliver() => deliverAddedItem(
+        household: household,
+        shoppinglist: shoppinglist,
+        item: item,
+        changedAt: timestamp,
       );
-    } else {
-      return ApiService.getInstance().addItemByName(
-        shoppinglist,
-        item.name,
-        (item is ItemWithDescription
-            ? (item as ItemWithDescription).description
-            : ""),
-      );
-    }
-  }
+
+  @override
+  Future<bool?> runOnline() async =>
+      (await deliver()).outcome == DeliveryOutcome.delivered;
 }
 
-class TransactionShoppingListRemoveItem extends Transaction<bool> {
+class TransactionShoppingListRemoveItem extends Transaction<bool>
+    with LocalFirstTransaction<bool> {
+  @override
   final Household household;
   final ShoppingList shoppinglist;
   final ShoppinglistItem item;
@@ -201,14 +204,21 @@ class TransactionShoppingListRemoveItem extends Transaction<bool> {
   }
 
   @override
-  Future<bool?> runOnline() {
-    runLocal();
+  Future<Delivery> deliver() => deliverRemovedItem(
+        household: household,
+        shoppinglist: shoppinglist,
+        item: item,
+        changedAt: timestamp,
+      );
 
-    return ApiService.getInstance().removeItem(shoppinglist, item, timestamp);
-  }
+  @override
+  Future<bool?> runOnline() async =>
+      (await deliver()).outcome == DeliveryOutcome.delivered;
 }
 
-class TransactionShoppingListRemoveItems extends Transaction<bool> {
+class TransactionShoppingListRemoveItems extends Transaction<bool>
+    with LocalFirstTransaction<bool> {
+  @override
   final Household household;
   final ShoppingList shoppinglist;
   final List<ShoppinglistItem> items;
@@ -254,8 +264,9 @@ class TransactionShoppingListRemoveItems extends Transaction<bool> {
     final latestShoppingList =
         shoppingLists.where((e) => e.id == shoppinglist.id).firstOrNull;
     if (latestShoppingList == null) return false;
-    latestShoppingList.items
-        .removeWhere((e) => items.map((e) => e.name).contains(e.name));
+    final names = items.map((e) => e.name).toSet();
+    latestShoppingList.items.removeWhere((e) => names.contains(e.name));
+    latestShoppingList.recentItems.removeWhere((e) => names.contains(e.name));
     latestShoppingList.recentItems.insertAll(0, items);
     MemStorage.getInstance().writeShoppingLists(household, shoppingLists);
 
@@ -263,14 +274,21 @@ class TransactionShoppingListRemoveItems extends Transaction<bool> {
   }
 
   @override
-  Future<bool?> runOnline() {
-    runLocal();
+  Future<Delivery> deliver() => deliverRemovedItems(
+        household: household,
+        shoppinglist: shoppinglist,
+        items: items,
+        changedAt: timestamp,
+      );
 
-    return ApiService.getInstance().removeItems(shoppinglist, items, timestamp);
-  }
+  @override
+  Future<bool?> runOnline() async =>
+      (await deliver()).outcome == DeliveryOutcome.delivered;
 }
 
-class TransactionShoppingListUpdateItem extends Transaction<bool> {
+class TransactionShoppingListUpdateItem extends Transaction<bool>
+    with LocalFirstTransaction<bool> {
+  @override
   final Household household;
   final ShoppingList shoppinglist;
   final Item item;
@@ -320,7 +338,10 @@ class TransactionShoppingListUpdateItem extends Transaction<bool> {
     if (latestShoppingList == null) return false;
 
     if (item is ShoppinglistItem) {
-      final int i = latestShoppingList.items.indexWhere((e) => e.id == item.id);
+      // per nome: gli articoli aggiunti senza rete non hanno ancora un id
+      final int i =
+          latestShoppingList.items.indexWhere((e) => e.name == item.name);
+      if (i < 0) return false;
       latestShoppingList.items[i] =
           (item as ShoppinglistItem).copyWith(description: description);
       MemStorage.getInstance().writeShoppingLists(household, shoppingLists);
@@ -340,12 +361,17 @@ class TransactionShoppingListUpdateItem extends Transaction<bool> {
   }
 
   @override
-  Future<bool?> runOnline() async {
-    return ApiService.getInstance().putItem(
-      shoppinglist,
-      ItemWithDescription.fromItem(item: item, description: description),
-    );
-  }
+  Future<Delivery> deliver() => deliverDescription(
+        household: household,
+        shoppinglist: shoppinglist,
+        item: item,
+        description: description,
+        changedAt: timestamp,
+      );
+
+  @override
+  Future<bool?> runOnline() async =>
+      (await deliver()).outcome == DeliveryOutcome.delivered;
 }
 
 class TransactionShoppingListAddRecipeItems extends Transaction<bool> {

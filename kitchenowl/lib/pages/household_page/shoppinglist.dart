@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animations/animations.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +13,7 @@ import 'package:kitchenowl/kitchenowl.dart';
 import 'package:kitchenowl/widgets/choice_scroll.dart';
 import 'package:kitchenowl/widgets/shopping_list/shopping_list_choice_chip.dart';
 import 'package:kitchenowl/widgets/shopping_list/sliver_shopinglist_item_view.dart';
+import 'package:kitchenowl/services/transaction_handler.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class ShoppinglistPage extends StatefulWidget {
@@ -22,10 +25,14 @@ class ShoppinglistPage extends StatefulWidget {
 
 class _ShoppinglistPageState extends State<ShoppinglistPage> {
   final TextEditingController searchController = TextEditingController();
+  StreamSubscription<List<String>>? _supersededSubscription;
 
   @override
   void initState() {
     super.initState();
+    _supersededSubscription = TransactionHandler.getInstance()
+        .supersededItems
+        .listen(_showSupersededNotice);
     searchController.text = BlocProvider.of<ShoppinglistCubit>(context).query;
     if (BlocProvider.of<SettingsCubit>(context).state.shoppingListKeepAwake) {
       WakelockPlus.enable();
@@ -35,8 +42,23 @@ class _ShoppinglistPageState extends State<ShoppinglistPage> {
   @override
   void dispose() {
     WakelockPlus.disable();
+    _supersededSubscription?.cancel();
     searchController.dispose();
     super.dispose();
+  }
+
+  // Modifiche fatte sul telefono che il server ha scartato perché ne aveva
+  // una più recente (feature 001-local-first): la lista è già riallineata,
+  // qui si dice solo ad Andrea quali articoli
+  void _showSupersededNotice(List<String> itemNames) {
+    if (!mounted) return;
+    showSnackbar(
+      context: context,
+      width: null,
+      duration: const Duration(seconds: 5),
+      content: Text(AppLocalizations.of(context)!
+          .shoppingListChangeSuperseded(itemNames.join(', '))),
+    );
   }
 
   @override
