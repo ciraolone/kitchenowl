@@ -91,7 +91,7 @@ class History(Model):
     def find_dropped_by_shoppinglist_id(cls, shoppinglist_id: int) -> list[Self]:
         return cls.query.filter(
             cls.shoppinglist_id == shoppinglist_id, cls.status == Status.DROPPED
-        ).all()
+        ).order_by(cls.created_at, cls.id).all()
 
     @classmethod
     def find_by_shoppinglist_id(cls, shoppinglist_id: int) -> list[Self]:

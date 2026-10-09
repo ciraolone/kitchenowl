@@ -39,7 +39,9 @@ def clusterShoppings(shoppinglist_id: int) -> list | None:
     # indices to list of itemlists for each found shopping instance
     shopping_instances = [[dropped[i].item_id for i in cluster] for cluster in clusters]
 
-    # remove duplicates in the instances
-    shopping_instances = [list(set(instance)) for instance in shopping_instances]
+    # remove duplicates in the instances, keeping the order items were checked off:
+    # the ordering job learns from that sequence, so a set() here (unordered) would
+    # make it learn the item creation order instead
+    shopping_instances = [list(dict.fromkeys(instance)) for instance in shopping_instances]
 
     return shopping_instances
