@@ -27,8 +27,10 @@ void main() {
       item(3, 'Miele', 0.5),
     ];
 
-    expect(names(searchCatalog(catalog, 'mele')), ['Mele', 'Melanzane', 'Miele']);
-    expect(names(searchCatalog(catalog, 'mel')), ['Melanzane', 'Mele', 'Miele']);
+    expect(
+        names(searchCatalog(catalog, 'mele')), ['Mele', 'Melanzane', 'Miele']);
+    expect(
+        names(searchCatalog(catalog, 'mel')), ['Melanzane', 'Mele', 'Miele']);
   });
 
   test("returns at most 11 items and nothing for an empty query", () {

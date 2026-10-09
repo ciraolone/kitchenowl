@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:background_fetch/background_fetch.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:intl/intl_standalone.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -15,6 +16,9 @@ Future main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
   if (!kIsWeb) await findSystemLocale(); //BUG in package for web?
+  // App sempre in inglese (features/003-lista-essenziale): anche date e
+  // numeri, insieme al locale fisso di MaterialApp in app.dart
+  Intl.defaultLocale = 'en';
   runApp(App());
 
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {

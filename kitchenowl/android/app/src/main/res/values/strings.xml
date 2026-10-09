@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Testi del lato Android nativo (fuori da Flutter): oggi solo le scorciatoie del launcher. La traduzione italiana sta in values-it/strings.xml. -->
+<!-- Testi del lato Android nativo (fuori da Flutter): oggi solo le scorciatoie del launcher. Solo inglese: l'app è sempre in inglese (features/003-lista-essenziale). -->
 <resources>
     <string name="shortcut_add_item">Add item</string>
 </resources>

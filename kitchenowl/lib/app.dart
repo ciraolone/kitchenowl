@@ -224,6 +224,9 @@ class _AppState extends State<App> with WidgetsBindingObserver {
                           [
                             LocaleNamesLocalizationsDelegate(),
                           ],
+                  // Sempre inglese, qualunque sia la lingua del telefono
+                  // (features/003-lista-essenziale)
+                  locale: const Locale('en'),
                   supportedLocales:
                       const [Locale('en')] + AppLocalizations.supportedLocales,
                   theme: AppThemes.light(lightColorScheme),

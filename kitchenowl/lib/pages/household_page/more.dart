@@ -14,6 +14,20 @@ import 'package:kitchenowl/widgets/household_image.dart';
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
 
+  /// Pannello del pulsante casa: cambio casa, profilo, impostazioni. Lo
+  /// aprono la barra laterale e il pulsante accanto alla ricerca della lista.
+  static void show(BuildContext context, HouseholdCubit householdCubit) {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => BlocProvider.value(
+        value: householdCubit,
+        child: const MorePage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final householdCubit = BlocProvider.of<HouseholdCubit>(context);

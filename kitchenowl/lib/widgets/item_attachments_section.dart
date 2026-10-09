@@ -181,8 +181,7 @@ class ItemAttachmentsSection extends StatelessWidget {
     // Scarica i bytes con autenticazione (gli upload sono protetti) e poi:
     //   - su web: crea un blob URL e apre in nuova scheda
     //   - su mobile/desktop: salva in temp e condivide con app esterna
-    final res = await ApiService.getInstance()
-        .get('/upload/${att.filename}');
+    final res = await ApiService.getInstance().get('/upload/${att.filename}');
     if (res.statusCode != 200) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

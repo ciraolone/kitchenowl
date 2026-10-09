@@ -257,16 +257,14 @@ class ItemEditState extends Equatable {
   });
 
   // Comodo: foto ordinate per "ordering" (la prima e' la copertina).
-  List<ItemAttachment> get photos => attachments
-      .where((a) => a.kind == ItemAttachmentKind.photo)
-      .toList()
-    ..sort((a, b) => a.ordering.compareTo(b.ordering));
+  List<ItemAttachment> get photos =>
+      attachments.where((a) => a.kind == ItemAttachmentKind.photo).toList()
+        ..sort((a, b) => a.ordering.compareTo(b.ordering));
 
   // Comodo: PDF ordinati per "ordering".
-  List<ItemAttachment> get pdfs => attachments
-      .where((a) => a.kind == ItemAttachmentKind.pdf)
-      .toList()
-    ..sort((a, b) => a.ordering.compareTo(b.ordering));
+  List<ItemAttachment> get pdfs =>
+      attachments.where((a) => a.kind == ItemAttachmentKind.pdf).toList()
+        ..sort((a, b) => a.ordering.compareTo(b.ordering));
 
   ItemEditState copyWith({
     String? name,

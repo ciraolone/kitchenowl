@@ -19,6 +19,8 @@ L'intero archivio è piccolo (11 MB, circa 750 articoli, un solo utente) e sta t
 
 - I risultati compaiono a ogni lettera, istantanei, cercando fra **tutti** gli articoli mai usati (non solo quelli in lista o recenti), anche senza rete.
 - Scrivere nella ricerca non genera traffico verso il server.
+- Invio sulla tastiera aggiunge l'articolo con il nome scritto esattamente; se non esiste, il primo risultato che non è già in lista. Se l'articolo scritto è già in lista non succede nulla. (L'app originale prendeva sempre il primo risultato: scrivendo un articolo nuovo simile a uno già in lista, come "Mele" con "Pane", Invio non faceva niente.)
+- Invio funziona anche premuto subito dopo l'ultima lettera, prima che i risultati compaiano.
 
 ### Aggiungere, spuntare, modificare
 

@@ -111,16 +111,21 @@ class _SearchTextFieldState extends State<SearchTextField> {
           onChanged: _onChanged,
           textInputAction: widget.textInputAction ?? TextInputAction.done,
           textCapitalization: TextCapitalization.sentences,
+          // Flutter chiama onEditingComplete prima di onSubmitted. La ricerca
+          // si svuota solo dopo che onSubmitted ha letto i risultati: con la
+          // ricerca locale (features/001-local-first) svuotarla è istantaneo,
+          // e svuotata prima Invio non trovava più cosa aggiungere.
           onEditingComplete: widget.clearOnSubmit
               ? () {
                   _debouncer?.cancel();
-                  widget.onSearch('');
+                  if (widget.onSubmitted == null) widget.onSearch('');
                 }
               : null,
           onSubmitted: widget.onSubmitted != null
               ? (_) {
                   _debouncer?.cancel();
                   widget.onSubmitted!();
+                  if (widget.clearOnSubmit) widget.onSearch('');
                 }
               : null,
           autofocus: widget.autofocus,

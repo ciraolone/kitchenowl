@@ -8,7 +8,7 @@ Aggiungere un articolo alla lista della spesa è la cosa che Andrea fa più spes
 
 ## Comportamento
 
-- Tenendo premuta l'icona di KitchenOwl nel launcher compare la voce **Aggiungi articolo** ("Add item" con il telefono in inglese). La voce si può anche trascinare sulla schermata home come icona a sé.
+- Tenendo premuta l'icona di KitchenOwl nel launcher compare la voce **Add item** (l'app è sempre in inglese, feature 003). La voce si può anche trascinare sulla schermata home come icona a sé.
 - Toccandola si apre la lista della spesa dell'ultima casa usata, con il cursore già nel campo di ricerca e la tastiera aperta: si scrive il nome e si aggiunge come sempre.
 - Vale sia ad app chiusa sia ad app già aperta in sottofondo, qualunque pagina fosse aperta.
 - Se nessuna casa è ancora stata aperta, si arriva all'elenco delle case; se non si è fatto l'accesso, alla pagina di accesso.

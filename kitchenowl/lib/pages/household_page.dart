@@ -135,15 +135,7 @@ class _HouseholdPageState extends State<HouseholdPage>
         expenseListCubit.refresh();
         break;
       case ViewsEnum.more:
-        showModalBottomSheet(
-          context: context,
-          showDragHandle: true,
-          isScrollControlled: true,
-          builder: (context) => BlocProvider.value(
-            value: householdCubit,
-            child: MorePage(),
-          ),
-        );
+        MorePage.show(context, householdCubit);
         return;
     }
     context.go("/household/${widget.household.id}/${tapped.toString()}");
@@ -193,11 +185,14 @@ class _HouseholdPageState extends State<HouseholdPage>
             return const PageNotFound();
           }
 
-          final bool useBottomNavigationBar = getValueForScreenType<bool>(
+          // Sui telefoni non c'è barra di navigazione (features/003-lista-
+          // essenziale): il pulsante casa sta accanto alla ricerca della
+          // lista. Tablet e computer tengono la barra laterale.
+          final bool usesNavigationRail = getValueForScreenType<bool>(
             context: context,
-            mobile: true,
-            tablet: false,
-            desktop: false,
+            mobile: false,
+            tablet: true,
+            desktop: true,
           );
 
           Widget body = Align(
@@ -208,7 +203,7 @@ class _HouseholdPageState extends State<HouseholdPage>
             ),
           );
 
-          if (!useBottomNavigationBar) {
+          if (usesNavigationRail) {
             final bool extendedRail = getValueForScreenType<bool>(
               context: context,
               mobile: false,
@@ -246,30 +241,6 @@ class _HouseholdPageState extends State<HouseholdPage>
               popOnSelection: true,
             ),
             drawerEnableOpenDragGesture: false,
-            bottomNavigationBar: useBottomNavigationBar
-                ? BlocBuilder<AuthCubit, AuthState>(
-                    builder: (context, state) => NavigationBar(
-                      labelBehavior:
-                          NavigationDestinationLabelBehavior.onlyShowSelected,
-                      destinations: pages
-                          .map((e) => NavigationDestination(
-                                icon: e.toIconWidget(context) ??
-                                    Icon(e.toIcon(context)),
-                                selectedIcon: Icon(e.toSelectedIcon(context)),
-                                label: e.toLocalizedShortString(context),
-                                tooltip: e.toLocalizedString(context),
-                              ))
-                          .take(5)
-                          .toList(),
-                      selectedIndex: _selectedIndex,
-                      onDestinationSelected: (i) => _onItemTapped(
-                        context,
-                        pages[i],
-                        pages[_selectedIndex],
-                      ),
-                    ),
-                  )
-                : null,
           );
         },
       ),

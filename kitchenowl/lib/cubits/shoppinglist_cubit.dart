@@ -168,6 +168,21 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     ));
   }
 
+  /// Invio nel campo di ricerca (scelta dell'articolo in itemToAddOnSubmit).
+  /// I risultati si ricalcolano qui invece di leggerli dallo stato, che può
+  /// essere ancora quello di un testo precedente (la ricerca parte 200 ms
+  /// dopo l'ultima lettera) o già svuotato dal campo di ricerca.
+  Future<void> addFromSearch(String query) async {
+    if (query.trim().isEmpty) return;
+    final results = await searchShoppinglistLocally(
+      household,
+      query,
+      state.selectedShoppinglist,
+    );
+    final item = itemToAddOnSubmit(results, query);
+    if (item != null) await add(item);
+  }
+
   Future<void> add(Item item) async {
     final _state = state;
     addLocally(ShoppinglistItem.fromItem(item: item));

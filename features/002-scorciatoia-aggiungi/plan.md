@@ -4,7 +4,7 @@
 
 ## Scorciatoia statica di Android, nessun plugin
 
-La voce è una scorciatoia statica dichiarata in `android/app/src/main/res/xml/shortcuts.xml` e agganciata all'attività principale nel manifest. Il testo viene da `strings.xml` (inglese in `values/`, italiano in `values-it/`), l'icona è un vettoriale "+" in `drawable/ic_shortcut_add_item.xml`.
+La voce è una scorciatoia statica dichiarata in `android/app/src/main/res/xml/shortcuts.xml` e agganciata all'attività principale nel manifest. Il testo viene da `values/strings.xml`, solo in inglese (feature 003), l'icona è un vettoriale "+" in `drawable/ic_shortcut_add_item.xml`.
 
 Scartato il plugin `quick_actions`: le scorciatoie le crea dal codice Dart a ogni avvio (non ci sono finché l'app non è stata aperta una volta) e aggiunge una dipendenza per una cosa che Android fa da solo.
 
