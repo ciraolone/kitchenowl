@@ -45,8 +45,8 @@ void main() {
 
     expect(isSameCategory(fridge, fridge.copyWith(ordering: 0)), isTrue);
     expect(isSameCategory(const Category(name: 'frigo'), fridge), isTrue);
-    expect(isSameCategory(const Category(id: 4, name: 'Frigo'), fridge),
-        isFalse);
+    expect(
+        isSameCategory(const Category(id: 4, name: 'Frigo'), fridge), isFalse);
     expect(isSameCategory(null, fridge), isFalse);
     expect(isSameCategory(null, null), isTrue);
   });

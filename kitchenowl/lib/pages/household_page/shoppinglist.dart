@@ -163,7 +163,9 @@ class _ShoppinglistPageState extends State<ShoppinglistPage>
                       previous.shoppingListListView !=
                           current.shoppingListListView ||
                       previous.listStyle != current.listStyle ||
-                      previous.gridSize != current.gridSize,
+                      previous.gridSize != current.gridSize ||
+                      previous.shoppingListHideIcons !=
+                          current.shoppingListHideIcons,
                   builder: (context, settingsState) => PageTransitionSwitcher(
                     transitionBuilder: (
                       Widget child,
@@ -188,6 +190,8 @@ class _ShoppinglistPageState extends State<ShoppinglistPage>
                                     listStyle: settingsState.listStyle,
                                     isList: settingsState.shoppingListListView,
                                     gridSize: settingsState.gridSize,
+                                    hideIcons:
+                                        settingsState.shoppingListHideIcons,
                                   ),
                                   items: state.result,
                                   categories: state.categories,
@@ -251,6 +255,8 @@ class _ShoppinglistPageState extends State<ShoppinglistPage>
                                         isList:
                                             settingsState.shoppingListListView,
                                         gridSize: settingsState.gridSize,
+                                        hideIcons:
+                                            settingsState.shoppingListHideIcons,
                                       ),
                                       categories: state.categories,
                                       isLoading: state
@@ -276,8 +282,7 @@ class _ShoppinglistPageState extends State<ShoppinglistPage>
                                       onArrange: cubit.arrangeItem,
                                       onMoveToCategory:
                                           cubit.moveItemToCategory,
-                                      onArrangeCategory:
-                                          cubit.arrangeCategory,
+                                      onArrangeCategory: cubit.arrangeCategory,
                                     ),
                                   ],
                                 ),

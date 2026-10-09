@@ -31,8 +31,10 @@ class SettingsCubit extends Cubit<SettingsState> {
         PreferenceStorage.getInstance().readBool(key: 'recentItemsCategorize');
     final restoreLastShoppingList = PreferenceStorage.getInstance()
         .readBool(key: 'restoreLastShoppingList');
-    final shoppingListKeepAwake = PreferenceStorage.getInstance()
-        .readBool(key: 'shoppingListKeepAwake');
+    final shoppingListKeepAwake =
+        PreferenceStorage.getInstance().readBool(key: 'shoppingListKeepAwake');
+    final shoppingListHideIcons =
+        PreferenceStorage.getInstance().readBool(key: 'shoppingListHideIcons');
 
     Config.deviceInfo = DeviceInfoPlugin().deviceInfo;
     Config.packageInfo = PackageInfo.fromPlatform();
@@ -59,6 +61,7 @@ class SettingsCubit extends Cubit<SettingsState> {
       recentItemsCategorize: await recentItemsCategorize ?? false,
       restoreLastShoppingList: await restoreLastShoppingList ?? false,
       shoppingListKeepAwake: await shoppingListKeepAwake ?? false,
+      shoppingListHideIcons: await shoppingListHideIcons ?? false,
     ));
   }
 
@@ -142,6 +145,15 @@ class SettingsCubit extends Cubit<SettingsState> {
     );
     emit(state.copyWith(shoppingListKeepAwake: shoppingListKeepAwake));
   }
+
+  /// Articoli senza icona, solo col nome (features/006-icone-nascoste).
+  void setShoppingListHideIcons(bool shoppingListHideIcons) {
+    PreferenceStorage.getInstance().writeBool(
+      key: 'shoppingListHideIcons',
+      value: shoppingListHideIcons,
+    );
+    emit(state.copyWith(shoppingListHideIcons: shoppingListHideIcons));
+  }
 }
 
 class SettingsState extends Equatable {
@@ -156,6 +168,7 @@ class SettingsState extends Equatable {
   final bool recentItemsCategorize;
   final bool restoreLastShoppingList;
   final bool shoppingListKeepAwake;
+  final bool shoppingListHideIcons;
 
   const SettingsState({
     this.themeMode = ThemeMode.system,
@@ -169,6 +182,7 @@ class SettingsState extends Equatable {
     this.recentItemsCategorize = false,
     this.restoreLastShoppingList = false,
     this.shoppingListKeepAwake = false,
+    this.shoppingListHideIcons = false,
   });
 
   SettingsState copyWith({
@@ -183,6 +197,7 @@ class SettingsState extends Equatable {
     bool? recentItemsCategorize,
     bool? restoreLastShoppingList,
     bool? shoppingListKeepAwake,
+    bool? shoppingListHideIcons,
   }) =>
       SettingsState(
         themeMode: themeMode ?? this.themeMode,
@@ -200,6 +215,8 @@ class SettingsState extends Equatable {
             restoreLastShoppingList ?? this.restoreLastShoppingList,
         shoppingListKeepAwake:
             shoppingListKeepAwake ?? this.shoppingListKeepAwake,
+        shoppingListHideIcons:
+            shoppingListHideIcons ?? this.shoppingListHideIcons,
       );
 
   @override
@@ -215,5 +232,6 @@ class SettingsState extends Equatable {
         recentItemsCategorize,
         restoreLastShoppingList,
         shoppingListKeepAwake,
+        shoppingListHideIcons,
       ];
 }

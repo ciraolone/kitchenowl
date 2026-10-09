@@ -362,7 +362,8 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     if (shoppinglist == null || moved.name == target.name) return;
     final isByCategory = state.sorting == ShoppinglistSorting.category;
     final group = shoppinglist.items
-        .where((e) => !isByCategory || isSameCategory(e.category, target.category))
+        .where(
+            (e) => !isByCategory || isSameCategory(e.category, target.category))
         .sorted(compareByRoute);
     final isMovingDown = group.indexWhere((e) => e.name == moved.name) <
         group.indexWhere((e) => e.name == target.name);
@@ -406,8 +407,7 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
   /// prende la sua posizione, quindi finisce subito dopo se scendeva e subito
   /// prima se saliva. Vale per tutta la casa, come dalle impostazioni.
   Future<void> arrangeCategory(Category moved, Category target) async {
-    final index =
-        state.categories.indexWhere((e) => isSameCategory(e, target));
+    final index = state.categories.indexWhere((e) => isSameCategory(e, target));
     if (index < 0 || isSameCategory(moved, target)) return;
     emit(state.copyWith(
       categories: moveCategory(state.categories, moved: moved, index: index),

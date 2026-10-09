@@ -285,6 +285,20 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ListTile(
+                  title: Text(
+                    AppLocalizations.of(context)!.shoppingListHideIcons,
+                  ),
+                  leading: const Icon(Icons.hide_image_rounded),
+                  onTap: () => BlocProvider.of<SettingsCubit>(context)
+                      .setShoppingListHideIcons(!state.shoppingListHideIcons),
+                  trailing: KitchenOwlSwitch(
+                    value: state.shoppingListHideIcons,
+                    onChanged: (value) =>
+                        BlocProvider.of<SettingsCubit>(context)
+                            .setShoppingListHideIcons(value),
+                  ),
+                ),
+                ListTile(
                   title:
                       Text(AppLocalizations.of(context)!.itemRemoveInteraction),
                   leading: const Icon(Icons.touch_app_rounded),

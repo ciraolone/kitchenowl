@@ -130,7 +130,8 @@ class SliverShopinglistItemView extends StatelessWidget {
           onRefresh: onRefresh,
           isLoading: isLoading,
           shoppingListStyle: shoppingListStyle,
-          splitByCategories: App.settings.recentItemsCategorize && _isByCategory,
+          splitByCategories:
+              App.settings.recentItemsCategorize && _isByCategory,
         ),
     ]);
   }

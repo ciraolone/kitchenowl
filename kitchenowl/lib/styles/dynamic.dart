@@ -21,11 +21,15 @@ class ShoppingListStyle {
   final GridSize gridSize;
   final ListStyle listStyle;
 
+  /// Caselle col solo nome, senza icona (features/006-icone-nascoste).
+  final bool hideIcons;
+
   const ShoppingListStyle({
     this.advancedItemView = false,
     this.isList = false,
     this.allRaised,
     this.gridSize = GridSize.normal,
     this.listStyle = ListStyle.cards,
+    this.hideIcons = false,
   });
 }

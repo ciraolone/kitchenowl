@@ -17,6 +17,7 @@ class ShoppingItemWidget<T extends Item> extends StatelessWidget {
   final bool? raised;
   final bool gridStyle;
   final ListStyle listStyle;
+  final bool showIcon;
 
   const ShoppingItemWidget({
     super.key,
@@ -28,6 +29,7 @@ class ShoppingItemWidget<T extends Item> extends StatelessWidget {
     this.listStyle = ListStyle.cards,
     this.raised,
     this.extraOption,
+    this.showIcon = true,
   });
 
   @override
@@ -36,7 +38,7 @@ class ShoppingItemWidget<T extends Item> extends StatelessWidget {
         ? SelectableButtonCard(
             title: item.name,
             selected: selected,
-            icon: ItemIcons.get(item),
+            icon: showIcon ? ItemIcons.get(item) : null,
             // Se l'item ha foto allegate, la prima viene mostrata come copertina
             // al posto dell'icona/emoji nella lista della spesa.
             coverPhoto: item.coverPhoto,
@@ -52,7 +54,7 @@ class ShoppingItemWidget<T extends Item> extends StatelessWidget {
         : SelectableButtonListTile(
             title: item.name,
             selected: selected,
-            icon: ItemIcons.get(item),
+            icon: showIcon ? ItemIcons.get(item) : null,
             listStyle: listStyle,
             raised: raised ??
                 item is ShoppinglistItem || item is RecipeItem && selected,

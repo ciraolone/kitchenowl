@@ -756,6 +756,7 @@
   "shoppingListDeleteConfirmation": "Are you sure you want to delete {shoppingList}?",
   "shoppingListEdit": "Edit shopping list",
   "shoppingListEmpty": "The shopping list is empty. Add an item using the search function above.",
+  "shoppingListHideIcons": "Hide item icons",
   "shoppingListKeepAwake": "Keep screen on while shopping",
   "shoppingListStyle": "Shopping list style",
   "shoppingLists": "Shopping lists",

@@ -67,8 +67,7 @@ class _SliverCategoryItemGridListState<T extends Item>
     if (widget.splitByCategories) {
       for (int i = 0; i < categoryLength + 1; i++) {
         Category? category = i < categoryLength ? widget.categories![i] : null;
-        final List<T> items =
-            widget.items
+        final List<T> items = widget.items
             .where((e) => isSameCategory(e.category, category))
             .toList();
         if (items.isEmpty) continue;
