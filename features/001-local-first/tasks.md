@@ -8,7 +8,7 @@
 - [x] Regola "vince il più recente" per articolo, risposta `409` con lo stato del server
 - [x] Cronologia datata con `changed_at`
 - [x] Test API: azione superata scartata, azione più recente applicata, chiamate senza `changed_at` invariate, data della spunta presa da `changed_at`
-- [ ] Ricompilare l'immagine del server e riavviare il container
+- [x] Ricompilare l'immagine del server e riavviare il container
 
 ## Compilazione Android
 
@@ -30,5 +30,5 @@
 
 ## Consegna
 
-- [ ] APK firmato mandato ad Andrea in chat, con le istruzioni di installazione (disinstallare prima l'app dello store)
+- [x] APK firmato mandato ad Andrea in chat, con le istruzioni di installazione (disinstallare prima l'app dello store)
 - [ ] Prova sul campo: ricerca, aggiunta e spunta in modalità aereo, ritorno della rete, sovrapposizione provocata apposta
