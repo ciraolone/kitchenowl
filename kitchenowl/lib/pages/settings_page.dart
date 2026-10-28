@@ -48,6 +48,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final user =
         (BlocProvider.of<AuthCubit>(context).state as Authenticated).user;
     final isOffline = App.isOffline;
+    final household = widget.household;
 
     final String privacyPolicyUrl = (App.serverInfo is ConnectedServerInfoState)
         ? (App.serverInfo as ConnectedServerInfoState).privacyPolicyUrl ??
@@ -195,176 +196,159 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ),
                   ),
-                ListTile(
-                  title: Text(AppLocalizations.of(context)!.shoppingListStyle),
-                  leading: const Icon(Icons.shopping_bag_rounded),
-                  titleAlignment: ListTileTitleAlignment.top,
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: SegmentedButton(
-                      selected: {state.shoppingListListView},
-                      segments: [
-                        ButtonSegment(
-                          value: false,
-                          icon: const Icon(Icons.grid_view_rounded),
-                          label: Text(AppLocalizations.of(context)!.grid),
-                        ),
-                        ButtonSegment(
-                          value: true,
-                          icon: const Icon(Icons.list_rounded),
-                          label: Text(AppLocalizations.of(context)!.list),
-                        ),
-                      ],
-                      onSelectionChanged: (Set<bool> value) {
-                        BlocProvider.of<SettingsCubit>(context)
-                            .setShoppingListListView(value.first);
-                      },
-                    ),
-                  ),
-                ),
-                if (!state.shoppingListListView)
-                  ListTile(
-                    title: Text(AppLocalizations.of(context)!.itemSize),
-                    leading: const Icon(Icons.grid_view_rounded),
-                    titleAlignment: ListTileTitleAlignment.top,
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: SegmentedButton(
-                        selected: {state.gridSize},
-                        segments: [
-                          ButtonSegment(
-                            value: GridSize.small,
-                            icon: const Icon(Icons.grid_4x4_rounded),
-                            label: Text(AppLocalizations.of(context)!.smaller),
-                          ),
-                          ButtonSegment(
-                            value: GridSize.normal,
-                            icon: const Icon(Icons.grid_3x3_rounded),
-                            label:
-                                Text(AppLocalizations.of(context)!.defaultWord),
-                          ),
-                          ButtonSegment(
-                            value: GridSize.large,
-                            icon: const Icon(Icons.crop_square_rounded),
-                            label: Text(AppLocalizations.of(context)!.larger),
-                          ),
-                        ],
-                        onSelectionChanged: (Set<GridSize> value) {
-                          BlocProvider.of<SettingsCubit>(context)
-                              .setGridSize(value.first);
-                        },
-                      ),
-                    ),
-                  ),
-                if (state.shoppingListListView)
-                  ListTile(
-                    title: Text(AppLocalizations.of(context)!.itemSize),
-                    leading: const Icon(Icons.line_style_rounded),
-                    titleAlignment: ListTileTitleAlignment.top,
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: SegmentedButton(
-                        selected: {state.listStyle},
-                        segments: [
-                          ButtonSegment(
-                            value: ListStyle.cards,
-                            icon: const Icon(Icons.view_agenda_rounded),
-                            label: Text(AppLocalizations.of(context)!.cards),
-                          ),
-                          ButtonSegment(
-                            value: ListStyle.minimalist,
-                            icon: const Icon(Icons.density_small_rounded),
-                            label: Text(AppLocalizations.of(context)!.compact),
-                          ),
-                        ],
-                        onSelectionChanged: (Set<ListStyle> value) {
-                          BlocProvider.of<SettingsCubit>(context)
-                              .setListStyle(value.first);
-                        },
-                      ),
-                    ),
-                  ),
-                ListTile(
-                  title: Text(
-                    AppLocalizations.of(context)!.shoppingListHideIcons,
-                  ),
-                  leading: const Icon(Icons.hide_image_rounded),
-                  onTap: () => BlocProvider.of<SettingsCubit>(context)
-                      .setShoppingListHideIcons(!state.shoppingListHideIcons),
-                  trailing: KitchenOwlSwitch(
-                    value: state.shoppingListHideIcons,
-                    onChanged: (value) =>
-                        BlocProvider.of<SettingsCubit>(context)
-                            .setShoppingListHideIcons(value),
-                  ),
-                ),
-                ListTile(
-                  title:
-                      Text(AppLocalizations.of(context)!.itemRemoveInteraction),
-                  leading: const Icon(Icons.touch_app_rounded),
-                  titleAlignment: ListTileTitleAlignment.top,
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: SegmentedButton(
-                      selected: {state.shoppingListTapToRemove},
-                      segments: [
-                        ButtonSegment(
-                          value: true,
-                          icon: const Icon(Icons.touch_app_rounded),
-                          label: Text(AppLocalizations.of(context)!.tap),
-                        ),
-                        ButtonSegment(
-                          value: false,
-                          icon: const Icon(Icons.done_all_rounded),
-                          label: Text(AppLocalizations.of(context)!.confirm),
-                        ),
-                      ],
-                      onSelectionChanged: (Set<bool> value) {
-                        BlocProvider.of<SettingsCubit>(context)
-                            .setShoppingListTapToRemove(value.first);
-                      },
-                    ),
-                  ),
-                ),
               ]),
             ),
           ),
         ),
-        SliverCrossAxisConstrained(
-          maxCrossAxisExtent: 1600,
-          child: BlocBuilder<SettingsCubit, SettingsState>(
-            builder: (context, state) => SliverExpansionTile(
-              startCollapsed: true,
-              titleCrossAxisAlignment: CrossAxisAlignment.center,
-              title: Row(
-                children: [
-                  const SizedBox(width: 16),
-                  Icon(Icons.more_horiz_rounded),
-                  const SizedBox(width: 12),
-                  Text(
-                    AppLocalizations.of(context)!.more,
-                    style: TextTheme.of(context).labelLarge,
+        // Impostazioni della lista del negozio aperto (feature 007).
+        if (household != null)
+          SliverCrossAxisConstrained(
+            maxCrossAxisExtent: 1600,
+            child: BlocBuilder<SettingsCubit, SettingsState>(
+              builder: (context, state) => SliverList(
+                delegate: SliverChildListDelegate([
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 2),
+                    child: Text(
+                      household.name.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
                   ),
-                ],
-              ),
-              sliver: SliverList.list(
-                children: [
                   ListTile(
                     title: Text(
-                      AppLocalizations.of(context)!.rememberLastShoppingList,
+                      AppLocalizations.of(context)!.shoppingListStyle,
                     ),
-                    leading: const Icon(Icons.restore_rounded),
+                    leading: const Icon(Icons.shopping_bag_rounded),
+                    titleAlignment: ListTileTitleAlignment.top,
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: SegmentedButton(
+                        selected: {state.shoppingListListView},
+                        segments: [
+                          ButtonSegment(
+                            value: false,
+                            icon: const Icon(Icons.grid_view_rounded),
+                            label: Text(AppLocalizations.of(context)!.grid),
+                          ),
+                          ButtonSegment(
+                            value: true,
+                            icon: const Icon(Icons.list_rounded),
+                            label: Text(AppLocalizations.of(context)!.list),
+                          ),
+                        ],
+                        onSelectionChanged: (Set<bool> value) {
+                          BlocProvider.of<SettingsCubit>(context)
+                              .setShoppingListListView(value.first);
+                        },
+                      ),
+                    ),
+                  ),
+                  if (!state.shoppingListListView)
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.itemSize),
+                      leading: const Icon(Icons.grid_view_rounded),
+                      titleAlignment: ListTileTitleAlignment.top,
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: SegmentedButton(
+                          selected: {state.gridSize},
+                          segments: [
+                            ButtonSegment(
+                              value: GridSize.small,
+                              icon: const Icon(Icons.grid_4x4_rounded),
+                              label:
+                                  Text(AppLocalizations.of(context)!.smaller),
+                            ),
+                            ButtonSegment(
+                              value: GridSize.normal,
+                              icon: const Icon(Icons.grid_3x3_rounded),
+                              label: Text(
+                                AppLocalizations.of(context)!.defaultWord,
+                              ),
+                            ),
+                            ButtonSegment(
+                              value: GridSize.large,
+                              icon: const Icon(Icons.crop_square_rounded),
+                              label: Text(AppLocalizations.of(context)!.larger),
+                            ),
+                          ],
+                          onSelectionChanged: (Set<GridSize> value) {
+                            BlocProvider.of<SettingsCubit>(context)
+                                .setGridSize(value.first);
+                          },
+                        ),
+                      ),
+                    ),
+                  if (state.shoppingListListView)
+                    ListTile(
+                      title: Text(AppLocalizations.of(context)!.itemSize),
+                      leading: const Icon(Icons.line_style_rounded),
+                      titleAlignment: ListTileTitleAlignment.top,
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: SegmentedButton(
+                          selected: {state.listStyle},
+                          segments: [
+                            ButtonSegment(
+                              value: ListStyle.cards,
+                              icon: const Icon(Icons.view_agenda_rounded),
+                              label: Text(AppLocalizations.of(context)!.cards),
+                            ),
+                            ButtonSegment(
+                              value: ListStyle.minimalist,
+                              icon: const Icon(Icons.density_small_rounded),
+                              label:
+                                  Text(AppLocalizations.of(context)!.compact),
+                            ),
+                          ],
+                          onSelectionChanged: (Set<ListStyle> value) {
+                            BlocProvider.of<SettingsCubit>(context)
+                                .setListStyle(value.first);
+                          },
+                        ),
+                      ),
+                    ),
+                  ListTile(
+                    title: Text(
+                      AppLocalizations.of(context)!.shoppingListHideIcons,
+                    ),
+                    leading: const Icon(Icons.hide_image_rounded),
                     onTap: () => BlocProvider.of<SettingsCubit>(context)
-                        .setRestoreLastShoppinglist(
-                      !BlocProvider.of<SettingsCubit>(context)
-                          .state
-                          .restoreLastShoppingList,
-                    ),
+                        .setShoppingListHideIcons(!state.shoppingListHideIcons),
                     trailing: KitchenOwlSwitch(
-                      value: state.restoreLastShoppingList,
+                      value: state.shoppingListHideIcons,
                       onChanged: (value) =>
                           BlocProvider.of<SettingsCubit>(context)
-                              .setRestoreLastShoppinglist(value),
+                              .setShoppingListHideIcons(value),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text(
+                      AppLocalizations.of(context)!.itemRemoveInteraction,
+                    ),
+                    leading: const Icon(Icons.touch_app_rounded),
+                    titleAlignment: ListTileTitleAlignment.top,
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: SegmentedButton(
+                        selected: {state.shoppingListTapToRemove},
+                        segments: [
+                          ButtonSegment(
+                            value: true,
+                            icon: const Icon(Icons.touch_app_rounded),
+                            label: Text(AppLocalizations.of(context)!.tap),
+                          ),
+                          ButtonSegment(
+                            value: false,
+                            icon: const Icon(Icons.done_all_rounded),
+                            label: Text(AppLocalizations.of(context)!.confirm),
+                          ),
+                        ],
+                        onSelectionChanged: (Set<bool> value) {
+                          BlocProvider.of<SettingsCubit>(context)
+                              .setShoppingListTapToRemove(value.first);
+                        },
+                      ),
                     ),
                   ),
                   ListTile(
@@ -418,6 +402,47 @@ class _SettingsPageState extends State<SettingsPage> {
                                 .setShoppingListKeepAwake(value),
                       ),
                     ),
+                ]),
+              ),
+            ),
+          ),
+        SliverCrossAxisConstrained(
+          maxCrossAxisExtent: 1600,
+          child: BlocBuilder<SettingsCubit, SettingsState>(
+            builder: (context, state) => SliverExpansionTile(
+              startCollapsed: true,
+              titleCrossAxisAlignment: CrossAxisAlignment.center,
+              title: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  Icon(Icons.more_horiz_rounded),
+                  const SizedBox(width: 12),
+                  Text(
+                    AppLocalizations.of(context)!.more,
+                    style: TextTheme.of(context).labelLarge,
+                  ),
+                ],
+              ),
+              sliver: SliverList.list(
+                children: [
+                  ListTile(
+                    title: Text(
+                      AppLocalizations.of(context)!.rememberLastShoppingList,
+                    ),
+                    leading: const Icon(Icons.restore_rounded),
+                    onTap: () => BlocProvider.of<SettingsCubit>(context)
+                        .setRestoreLastShoppinglist(
+                      !BlocProvider.of<SettingsCubit>(context)
+                          .state
+                          .restoreLastShoppingList,
+                    ),
+                    trailing: KitchenOwlSwitch(
+                      value: state.restoreLastShoppingList,
+                      onChanged: (value) =>
+                          BlocProvider.of<SettingsCubit>(context)
+                              .setRestoreLastShoppinglist(value),
+                    ),
+                  ),
                   if (!kIsWeb)
                     ListTile(
                       title: Text(
