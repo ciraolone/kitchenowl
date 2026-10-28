@@ -18,7 +18,8 @@ Ogni negozio è una casa (household) di KitchenOwl, che già separa articoli, re
 - `kitchenowl/lib/enums/shoppinglist_sorting.dart` — via `algorithmic`; restano `alphabetical` e `category`.
 - `kitchenowl/lib/cubits/shoppinglist_cubit.dart` — ordinamento letto e scritto per casa; `arrangeItem` lavora solo nel reparto; `moveItemToCategory` manda l'articolo in fondo.
 - `kitchenowl/lib/services/local_first/item_route.dart` — `arrangeItems` azzera `ordering` quando cambia il reparto; testata aggiornata (non è più l'ordine automatico).
-- `kitchenowl/lib/services/transactions/shoppinglist_arrange.dart` — via `route` dall'azione e dalla chiamata.
+- `kitchenowl/lib/services/transactions/shoppinglist_arrange.dart` — via `route` dall'azione.
+- `kitchenowl/lib/services/local_first/shoppinglist_delivery.dart` — `deliverArrangedItem` non mette più `route` nel corpo della richiesta.
 - `kitchenowl/lib/cubits/settings_cubit.dart` — impostazioni della lista per casa, `selectStore`, passaggio unico dei valori di oggi alla prima casa aperta.
 - `kitchenowl/lib/cubits/household_add_update/household_settings_items_cubit.dart`, `kitchenowl/lib/pages/settings_household/household_settings_items_page.dart` — tolto il caso `algorithmic`.
 - `kitchenowl/lib/pages/settings_page.dart` — la sezione della lista agisce sul negozio aperto e ne mostra il nome; nascosta se non c'è un negozio aperto.

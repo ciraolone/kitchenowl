@@ -25,8 +25,8 @@ In KitchenOwl ogni "casa" ha già articoli, reparti e lista propri, separati dal
 
 ### Impostazioni per negozio
 
-- Le impostazioni della lista valgono per il singolo negozio: vista a griglia o a elenco, dimensione della griglia, icone nascoste (feature 006), tocco che spunta o seleziona, numero di articoli recenti e loro divisione per reparti, schermo sempre acceso, ordinamento scelto. Esempio: supermercato in griglia, IKEA in elenco.
-- Si cambiano dalle stesse impostazioni di oggi, che agiscono sul negozio aperto in quel momento.
+- Le impostazioni della lista valgono per il singolo negozio: vista a griglia o a elenco, dimensione della griglia, stile dell'elenco, icone nascoste (feature 006), tocco che spunta o seleziona, numero di articoli recenti e loro divisione per reparti, schermo sempre acceso, ordinamento scelto. Esempio: supermercato in griglia, IKEA in elenco.
+- Si cambiano dalle stesse impostazioni di oggi, che agiscono sul negozio aperto in quel momento: la sezione della lista mostra il nome del negozio, e senza un negozio aperto non compare.
 - Tema e colori restano uguali per tutta l'app.
 - Un negozio nuovo parte con le impostazioni di serie (griglia, ordinamento per reparti).
 - Le impostazioni restano sul telefono, come oggi: non passano alla versione web.
