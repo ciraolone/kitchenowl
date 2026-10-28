@@ -1,3 +1,15 @@
+# kitchenowl
+
+**Cosa fa.** Fork personale di KitchenOwl: lista della spesa, ricette e spese di casa, con le modifiche di Andrea (foto sugli articoli, local-first, lista essenziale, reparti, negozi).
+
+**Dove gira.** Server nel container `kitchenowl` sull'home server (stack `house`), pubblico su `kitchen.ciraolo.cloud`. App Android compilata e firmata da noi, installata sul telefono.
+
+**Chi lo usa.** Andrea e la famiglia, dall'app; Claude con la skill `/spesa`.
+
+**Stato.** In uso; modifica 007 "negozi" in lavorazione.
+
+---
+
 <h1 align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./docs/docs/img/icon.png">
