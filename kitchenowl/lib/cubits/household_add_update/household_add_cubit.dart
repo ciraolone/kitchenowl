@@ -15,11 +15,10 @@ class HouseholdAddCubit extends HouseholdAddUpdateCubit<HouseholdAddState> {
         )) {
     ApiService.getInstance()
         .getSupportedLanguages()
-        .then((value) => emit(state.copyWith(
-              supportedLanguages: value,
-              language: Nullable(state.language ??
-                  ((value?.containsKey(locale) ?? false) ? locale : null)),
-            )));
+        // Nessuna lingua proposta: con una lingua il server riempie il negozio
+        // di articoli e reparti di serie, e un negozio nuovo nasce vuoto
+        // (fork di Andrea, feature 007)
+        .then((value) => emit(state.copyWith(supportedLanguages: value)));
   }
 
   @override

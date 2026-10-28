@@ -111,25 +111,18 @@ Future<Delivery> deliverRemovedItems({
 }
 
 /// category è null se il reparto non cambia; Nullable(null) toglie il
-/// reparto. route è il gruppo (lista o reparto) nell'ordine lasciato da
-/// Andrea: gli articoli senza id noto si saltano, il ricordo vale lo stesso.
+/// reparto.
 Future<Delivery> deliverArrangedItem({
   required Household household,
   required Item item,
   Item? after,
   Item? before,
   Nullable<Category>? category,
-  required List<Item> route,
-  required DateTime changedAt,
 }) async {
   final itemId = await _resolveItemId(household, item);
   if (itemId == null) return const Delivery(DeliveryOutcome.rejected);
   final body = <String, dynamic>{
     'item_id': itemId,
-    'changed_at': changedAt.toUtc().millisecondsSinceEpoch,
-    'route': [
-      for (final routeItem in route) await _resolveItemId(household, routeItem),
-    ].nonNulls.toList(),
   };
   if (after != null)
     body['after_item_id'] = await _resolveItemId(household, after);

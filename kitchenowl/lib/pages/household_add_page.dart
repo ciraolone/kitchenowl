@@ -90,10 +90,7 @@ class _HouseholdAddPageState extends State<HouseholdAddPage> {
             SliverCrossAxisConstrained(
               maxCrossAxisExtent: 600,
               child: const SliverHouseholdFeatureSettings<HouseholdAddCubit,
-                  HouseholdAddState>(
-                askConfirmation: false,
-                languageCanBeChanged: true,
-              ),
+                  HouseholdAddState>(),
             ),
             SliverCrossAxisConstrained(
               maxCrossAxisExtent: 600,

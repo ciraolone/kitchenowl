@@ -76,7 +76,6 @@ void main() {
       item: const ShoppinglistItem(id: 3, name: 'Latte'),
       before: const ShoppinglistItem(id: 4, name: 'Pane'),
       category: const Nullable(null),
-      route: placed(['Latte', 'Pane']),
     );
 
     final restored = Transaction.fromJson(original.toJson())
@@ -86,6 +85,5 @@ void main() {
     expect(restored.after, isNull);
     expect(restored.category, isNotNull);
     expect(restored.category?.value, isNull);
-    expect(namesOf(restored.route), ['Latte', 'Pane']);
   });
 }

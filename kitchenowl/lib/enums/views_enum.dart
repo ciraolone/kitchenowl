@@ -61,7 +61,7 @@ enum ViewsEnum {
       Icons.receipt_outlined,
       Icons.calendar_today_outlined,
       Icons.account_balance_outlined,
-      App.isOffline ? Icons.cloud_off_rounded : Icons.house_rounded,
+      App.isOffline ? Icons.cloud_off_rounded : Icons.storefront_rounded,
     ][index];
   }
 
@@ -71,7 +71,7 @@ enum ViewsEnum {
       Icons.receipt_rounded,
       Icons.calendar_today_rounded,
       Icons.account_balance_rounded,
-      App.isOffline ? Icons.cloud_off_rounded : Icons.house_rounded,
+      App.isOffline ? Icons.cloud_off_rounded : Icons.storefront_rounded,
     ][index];
   }
 

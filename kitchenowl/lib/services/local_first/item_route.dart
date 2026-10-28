@@ -1,15 +1,16 @@
-/// Percorso nel negozio, cioè l'ordine automatico della lista della spesa
-/// (feature 004-riordino-trascinamento del fork di Andrea). Il percorso è il
-/// campo ordering degli articoli: zero vuol dire "mai piazzato" e va in fondo,
-/// a parità si ordina per nome in minuscolo. Qui stanno il confronto usato
-/// dagli ordinamenti automatico e per reparti (compareByRoute) e la regola con
-/// cui un articolo trascinato prende posto (placeInRoute), gemella di
-/// place_in_route in backend/app/service/item_route.py: se le due divergono,
-/// telefono e server mostrano ordini diversi dopo lo stesso trascinamento.
-/// arrangeItems mette insieme posto e reparto nuovo ed è usata sia dal cubit
-/// sia dall'azione in coda, così schermo e copia locale cambiano allo stesso
-/// modo. Gli articoli si riconoscono per nome, perché quelli aggiunti senza
-/// rete non hanno ancora un id.
+/// Ordine manuale degli articoli dentro i reparti della lista della spesa
+/// (feature 004 e 007 del fork di Andrea). L'ordine è il campo ordering degli
+/// articoli, dato solo col trascinamento: zero vuol dire "mai ordinato a
+/// mano" e va in fondo, a parità si ordina per nome in minuscolo. Qui stanno
+/// il confronto usato dall'ordinamento per reparti (compareByRoute) e la
+/// regola con cui un articolo trascinato prende posto (placeInRoute), gemella
+/// di place_in_route in backend/app/service/item_route.py: se le due
+/// divergono, telefono e server mostrano ordini diversi dopo lo stesso
+/// trascinamento. arrangeItems applica un trascinamento (posto o reparto
+/// nuovo) ed è usata sia dal cubit sia dall'azione in coda, così schermo e
+/// copia locale cambiano allo stesso modo. Gli articoli si riconoscono per
+/// nome, perché quelli aggiunti senza rete non hanno ancora un id. Il nome
+/// "route" è storico: non c'è più un percorso imparato dalle spese.
 library;
 
 import 'package:collection/collection.dart';
@@ -58,8 +59,11 @@ List<ShoppinglistItem> placeInRoute(
   ];
 }
 
-/// Applica un trascinamento agli articoli di una lista: reparto nuovo (se
-/// category non è null) e posto nel percorso (se c'è afterName o beforeName).
+/// Applica un trascinamento agli articoli di una lista. Con un reparto nuovo
+/// (category non null) l'articolo ci va in fondo, con ordering 0 come fa il
+/// server: se lo azzerasse un lato solo, l'articolo salterebbe di posto al
+/// primo aggiornamento. Altrimenti prende posto dopo afterName o prima di
+/// beforeName.
 List<ShoppinglistItem> arrangeItems(
   List<ShoppinglistItem> items, {
   required String movedName,
@@ -67,14 +71,16 @@ List<ShoppinglistItem> arrangeItems(
   String? beforeName,
   Nullable<Category>? category,
 }) {
-  final recategorized = category == null
-      ? items
-      : [
-          for (final item in items)
-            item.name == movedName ? item.copyWith(category: category) : item,
-        ];
+  if (category != null) {
+    return [
+      for (final item in items)
+        item.name == movedName
+            ? item.copyWith(category: category, ordering: 0)
+            : item,
+    ];
+  }
   return placeInRoute(
-    recategorized,
+    items,
     movedName: movedName,
     afterName: afterName,
     beforeName: beforeName,

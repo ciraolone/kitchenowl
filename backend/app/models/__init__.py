@@ -1,7 +1,6 @@
 from .user import User
 from .item import Item
 from .item_attachment import ItemAttachment
-from .item_route_hint import ItemRouteHint
 from .association import Association
 from .expense import Expense, ExpensePaidFor
 from .settings import Settings

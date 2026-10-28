@@ -11,8 +11,7 @@ from app.models.item_attachment import (
     MAX_PDFS_PER_ITEM,
 )
 from app.service.file_has_access_or_download import file_has_access_or_download
-from app.service.item_route import place_in_route, remember_route
-from app.service.shoppinglist_change_order import changed_at_to_datetime
+from app.service.item_route import place_in_route
 from app import db
 from .schemas import (
     SearchByNameRequest,
@@ -113,7 +112,7 @@ def addItem(args, household_id):
     return jsonify(item.obj_to_dict())
 
 
-# Trascinamento nella lista della spesa (fork di Andrea, feature 004): sposta l'articolo nel percorso e/o in un altro reparto e ricorda l'ordine del gruppo per l'analisi notturna. Vince l'ultimo arrivato, senza la regola delle sovrapposizioni della feature 001.
+# Trascinamento nella lista della spesa (fork di Andrea, feature 004 e 007): sposta l'articolo nell'ordine manuale del suo reparto, oppure in un altro reparto, dove va in fondo (ordering 0, come fa arrangeItems nell'app: se lo facesse un lato solo, l'articolo salterebbe di posto al primo aggiornamento). Vince l'ultimo arrivato, senza la regola delle sovrapposizioni della feature 001.
 @itemHousehold.route("/arrange", methods=["POST"])
 @jwt_required()
 @authorize_household()
@@ -124,29 +123,23 @@ def arrangeItem(args, household_id):
     before = _household_item(household_id, args.get("before_item_id"))
 
     if "category" in args:
-        category = (
-            Category.find_by_id(args["category"]["id"]) if args["category"] else None
-        )
-        if category is not None and category.household_id != household_id:
-            raise InvalidUsage()
-        moved.category = category
-        db.session.add(moved)
+        _move_to_category(household_id, moved, args["category"])
+        db.session.commit()
+        return jsonify(moved.obj_to_dict())
 
     place_in_route(household_id, moved, after=after, before=before)
-    known_ids = {
-        item.id
-        for item in Item.query.filter(
-            Item.household_id == household_id, Item.id.in_(args["route"])
-        ).all()
-    }
-    remember_route(
-        household_id,
-        [item_id for item_id in args["route"] if item_id in known_ids],
-        changed_at_to_datetime(args.get("changed_at")),
-    )
     db.session.commit()
 
     return jsonify(moved.obj_to_dict())
+
+
+def _move_to_category(household_id: int, moved: Item, category_ref: dict | None):
+    category = Category.find_by_id(category_ref["id"]) if category_ref else None
+    if category is not None and category.household_id != household_id:
+        raise InvalidUsage()
+    moved.category = category
+    moved.ordering = 0
+    db.session.add(moved)
 
 
 def _household_item(household_id: int, item_id: int | None) -> Item | None:
@@ -295,9 +288,4 @@ def reorderItemAttachments(args, id):
         db.session.add(existing[att_id])
     db.session.commit()
 
-    return jsonify(
-        [
-            existing[att_id].obj_to_dict()
-            for att_id in requested_ids
-        ]
-    )
+    return jsonify([existing[att_id].obj_to_dict() for att_id in requested_ids])

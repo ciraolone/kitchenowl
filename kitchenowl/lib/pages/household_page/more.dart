@@ -5,18 +5,21 @@ import 'package:collection/collection.dart';
 import 'package:kitchenowl/app.dart';
 import 'package:kitchenowl/cubits/auth_cubit.dart';
 import 'package:kitchenowl/cubits/household_cubit.dart';
+import 'package:kitchenowl/cubits/household_list_cubit.dart';
 import 'package:kitchenowl/cubits/shoppinglist_cubit.dart';
 import 'package:kitchenowl/enums/update_enum.dart';
 import 'package:kitchenowl/enums/views_enum.dart';
 import 'package:kitchenowl/kitchenowl.dart';
+import 'package:kitchenowl/models/household.dart';
 import 'package:kitchenowl/pages/household_update_page.dart';
 import 'package:kitchenowl/widgets/household_image.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
 
-  /// Pannello del pulsante casa: cambio casa, profilo, impostazioni e
-  /// reparto nuovo (features/005, per questo serve ShoppinglistCubit). Lo
+  /// Pannello del pulsante negozio: elenco dei negozi per passare dall'uno
+  /// all'altro con un tocco (feature 007), profilo, impostazioni e reparto
+  /// nuovo (features/005, per questo serve ShoppinglistCubit). Lo
   /// aprono la barra laterale e il pulsante accanto alla ricerca della lista.
   static void show(
     BuildContext context,
@@ -63,6 +66,8 @@ class MorePage extends StatelessWidget {
         shrinkWrap: true,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         children: [
+          _StoreList(openStore: householdCubit.state.household),
+          const Divider(),
           BlocBuilder<HouseholdCubit, HouseholdState>(
             bloc: householdCubit,
             builder: (context, state) => Column(
@@ -200,6 +205,52 @@ class MorePage extends StatelessWidget {
           const SizedBox(height: 16),
         ],
       ),
+    );
+  }
+}
+
+/// I negozi dell'utente, dal server o, senza rete, dalla copia sul telefono.
+/// Il tocco apre il negozio passando dalla stessa rotta dell'elenco completo,
+/// che ricorda anche l'ultimo negozio usato per la riapertura dell'app e per
+/// la scorciatoia "Add item".
+class _StoreList extends StatelessWidget {
+  final Household openStore;
+
+  const _StoreList({required this.openStore});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => HouseholdListCubit(),
+      child: BlocBuilder<HouseholdListCubit, HouseholdListState>(
+        builder: (context, state) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final store in state.households)
+              Card(
+                child: ListTile(
+                  title: Text(store.name),
+                  leading: const Icon(Icons.storefront_rounded),
+                  minLeadingWidth: 16,
+                  selected: store.id == openStore.id,
+                  trailing: store.id == openStore.id
+                      ? const Icon(Icons.check_rounded)
+                      : null,
+                  onTap: () => _open(context, store),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _open(BuildContext context, Household store) {
+    context.pop();
+    if (store.id == openStore.id) return;
+    context.go(
+      '/household/${store.id}/${store.viewOrdering?.firstOrNull.toString()}',
+      extra: store,
     );
   }
 }

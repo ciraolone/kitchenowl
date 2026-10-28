@@ -46,6 +46,8 @@ class App extends StatefulWidget {
 
   static SettingsState get settings => _instance!._settingsCubit.state;
 
+  static SettingsCubit get settingsCubit => _instance!._settingsCubit;
+
   static ServerInfoState get serverInfo => _instance!._serverInfoCubit.state;
 
   App({super.key}) {

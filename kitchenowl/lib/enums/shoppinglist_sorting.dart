@@ -5,7 +5,6 @@ import 'package:kitchenowl/services/local_first/item_route.dart';
 
 enum ShoppinglistSorting {
   alphabetical,
-  algorithmic,
   category;
 
   String toLocalizedString(BuildContext context) {
@@ -13,7 +12,6 @@ enum ShoppinglistSorting {
 
     return [
       loc.sortingAlphabetical,
-      loc.sortingAlgorithmic,
       loc.category
     ][index];
   }
@@ -23,7 +21,6 @@ enum ShoppinglistSorting {
   IconData toIcon() {
     return [
       Icons.sort_by_alpha_rounded,
-      Icons.route_rounded,
       Icons.category_rounded,
     ][index];
   }
@@ -38,9 +35,8 @@ enum ShoppinglistSorting {
         shoppinglist.sort(
             (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
         break;
-      // Per reparti: dentro ogni reparto si segue il percorso, così un
-      // articolo trascinato resta dove lo si è lasciato (features/004)
-      case ShoppinglistSorting.algorithmic:
+      // Per reparti: dentro ogni reparto si segue l'ordine manuale, così un
+      // articolo trascinato resta dove lo si è lasciato (features/004 e 007)
       case ShoppinglistSorting.category:
         shoppinglist.sort(compareByRoute);
         break;

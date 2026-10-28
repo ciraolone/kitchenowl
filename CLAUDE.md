@@ -12,7 +12,6 @@ Fork personale di [KitchenOwl](https://github.com/TomBursch/kitchenowl) (lista d
 Ogni modifica non banale ha la sua cartella in `features/` (spec, plan, tasks). Quelle fatte prima di questa convenzione:
 
 - Foto e PDF allegati agli articoli (backend + app).
-- Ordinamento "per ordine d'acquisto": l'analisi notturna imparava l'ordine di creazione degli articoli invece di quello di spunta (corretto in `backend/app/jobs/cluster_shoppings.py`, prova in `backend/tests/api/test_api_item_ordering.py`).
 
 ## Prove
 

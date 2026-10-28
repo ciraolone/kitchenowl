@@ -1,9 +1,7 @@
-# Percorso nel negozio, cioè l'ordine automatico della lista della spesa (fork di Andrea, feature 004-riordino-trascinamento). Il percorso è il campo ordering degli articoli della casa: zero vuol dire "mai piazzato" e va in fondo, a parità si ordina per nome in minuscolo (lo stesso confronto di compareByRoute nell'app, altrimenti telefono e server sposterebbero in modo diverso). Qui stanno la regola con cui un articolo trascinato prende posto (place_in_route, gemella di placeInRoute nell'app), il salvataggio dell'ordine lasciato da Andrea come ricordo per l'analisi notturna (remember_route) e la fusione di spese e ricordi in ordine di tempo che l'analisi passa al calcolo dell'ordine (route_instances).
-
-from datetime import datetime
+# Ordine manuale degli articoli dentro i reparti della lista della spesa (fork di Andrea, feature 004 e 007). L'ordine è il campo ordering degli articoli della casa, dato solo col trascinamento: zero vuol dire "mai ordinato a mano" e va in fondo, a parità si ordina per nome in minuscolo (lo stesso confronto di compareByRoute nell'app, altrimenti telefono e server sposterebbero in modo diverso). Qui sta la regola con cui un articolo trascinato prende posto (place_in_route, gemella di placeInRoute nell'app). Il nome "route" è storico: non c'è più un percorso imparato dalle spese.
 
 from app import db
-from app.models import Item, ItemRouteHint
+from app.models import Item
 
 
 def route_key(item: Item):
@@ -33,24 +31,3 @@ def place_in_route(
             item.ordering = next_ordering
             next_ordering += 1
             db.session.add(item)
-
-
-def remember_route(household_id: int, item_ids: list[int], changed_at: datetime | None):
-    if len(item_ids) < 2:
-        return
-    hint = ItemRouteHint(household_id=household_id, item_ids=item_ids)
-    if changed_at is not None:
-        hint.created_at = changed_at
-    db.session.add(hint)
-
-
-def route_instances(
-    household_id: int, shoppings: list[tuple[datetime, list[int]]]
-) -> list[list[int]]:
-    hints = [
-        (hint.created_at, hint.item_ids)
-        for hint in ItemRouteHint.all_by_household(household_id)
-    ]
-    # L'ordine di tempo conta: il calcolo fa pesare di più ciò che arriva per ultimo
-    merged = sorted(shoppings + hints, key=lambda instance: instance[0])
-    return [item_ids for _, item_ids in merged]

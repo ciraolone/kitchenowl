@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kitchenowl/app.dart';
 import 'package:kitchenowl/enums/shoppinglist_sorting.dart';
 import 'package:kitchenowl/models/category.dart';
 import 'package:kitchenowl/models/household.dart';
@@ -34,13 +35,11 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
 
   ShoppinglistCubit(this.household)
       : super(const LoadingShoppinglistCubitState()) {
-    PreferenceStorage.getInstance().readInt(key: 'itemSorting').then((i) {
-      if (i != null && state.sorting.index != i) {
-        setSorting(
-          ShoppinglistSorting.values[i % ShoppinglistSorting.values.length],
-          false,
-        );
-      }
+    // L'ordinamento è del negozio (feature 007): si legge solo a caricamento
+    // finito, altrimenti si prenderebbe quello del negozio aperto prima
+    App.settingsCubit.selectStore(household.id).then((_) {
+      final sorting = App.settings.shoppingListSorting;
+      if (state.sorting != sorting) setSorting(sorting, false);
     });
     _initialLoad();
     refresh();
@@ -350,20 +349,17 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
     }
   }
 
-  /// Trascinamento su un altro articolo (feature 004-riordino-trascinamento):
-  /// se l'articolo scendeva finisce subito dopo target, se saliva subito
-  /// prima. Il gruppo che il server ricorda per l'analisi notturna è tutta la
-  /// lista, o solo il reparto di target nell'ordinamento per reparti.
+  /// Trascinamento su un altro articolo (feature 004 e 007): se l'articolo
+  /// scendeva nel reparto di target finisce subito dopo target, se saliva
+  /// subito prima.
   Future<void> arrangeItem(
     ShoppinglistItem moved,
     ShoppinglistItem target,
   ) async {
     final shoppinglist = state.selectedShoppinglist;
     if (shoppinglist == null || moved.name == target.name) return;
-    final isByCategory = state.sorting == ShoppinglistSorting.category;
     final group = shoppinglist.items
-        .where(
-            (e) => !isByCategory || isSameCategory(e.category, target.category))
+        .where((e) => isSameCategory(e.category, target.category))
         .sorted(compareByRoute);
     final isMovingDown = group.indexWhere((e) => e.name == moved.name) <
         group.indexWhere((e) => e.name == target.name);
@@ -375,18 +371,13 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
       item: moved,
       after: after,
       before: before,
-      route: placeInRoute(
-        group,
-        movedName: moved.name,
-        afterName: after?.name,
-        beforeName: before?.name,
-      ),
     ));
   }
 
   /// Trascinamento sulla riga di un reparto (feature 004): il cambio di
   /// reparto è dell'articolo, quindi vale per sempre e non solo in questa
-  /// lista. category null vuol dire "Uncategorized".
+  /// lista, e l'articolo va in fondo al reparto nuovo (feature 007).
+  /// category null vuol dire "Uncategorized".
   Future<void> moveItemToCategory(
     ShoppinglistItem moved,
     Category? category,
@@ -467,10 +458,7 @@ class ShoppinglistCubit extends Cubit<ShoppinglistCubitState> {
       state.shoppinglists.forEach((_, l) =>
           ShoppinglistSorting.sortShoppinglistItems(l.items, sorting));
     }
-    if (savePreference) {
-      PreferenceStorage.getInstance()
-          .writeInt(key: 'itemSorting', value: sorting.index);
-    }
+    if (savePreference) App.settingsCubit.setShoppingListSorting(sorting);
     emit(state.copyWith(sorting: sorting));
   }
 

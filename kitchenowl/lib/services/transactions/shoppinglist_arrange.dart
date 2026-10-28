@@ -2,9 +2,9 @@
 /// 004-riordino-trascinamento del fork di Andrea), come azione local first:
 /// si applica subito alla copia sul telefono, va in coda e il postino la
 /// consegna al server (deliverArrangedItem). Porta l'articolo spostato,
-/// l'articolo dopo cui o prima di cui va, l'eventuale reparto nuovo e il
-/// gruppo nell'ordine lasciato da Andrea, che il server ricorda per l'analisi
-/// notturna. runLocal è idempotente, perché le azioni non ancora consegnate
+/// l'articolo dopo cui o prima di cui va e l'eventuale reparto nuovo. Le
+/// azioni salvate da versioni vecchie possono portare anche un campo route,
+/// che si ignora. runLocal è idempotente, perché le azioni non ancora consegnate
 /// si riapplicano sopra ogni copia fresca del server.
 library;
 
@@ -30,7 +30,6 @@ class TransactionShoppingListArrangeItem extends Transaction<bool>
 
   /// null se il reparto non cambia; Nullable(null) toglie il reparto.
   final Nullable<Category>? category;
-  final List<ShoppinglistItem> route;
 
   TransactionShoppingListArrangeItem({
     required this.household,
@@ -39,7 +38,6 @@ class TransactionShoppingListArrangeItem extends Transaction<bool>
     this.after,
     this.before,
     this.category,
-    this.route = const [],
     DateTime? timestamp,
   }) : super.internal(
           timestamp ?? DateTime.now(),
@@ -65,9 +63,6 @@ class TransactionShoppingListArrangeItem extends Transaction<bool>
                 ? Category.fromJson(map['category'])
                 : null)
             : null,
-        route: List.from(map['route'] ?? const [])
-            .map((e) => ShoppinglistItem.fromJson(e))
-            .toList(),
         timestamp: timestamp,
       );
 
@@ -84,7 +79,6 @@ class TransactionShoppingListArrangeItem extends Transaction<bool>
       "before": before?.toJsonWithId(),
       "changes_category": category != null,
       "category": category?.value?.toJsonWithId(),
-      "route": route.map((e) => e.toJsonWithId()).toList(),
     });
 
   @override
@@ -116,8 +110,6 @@ class TransactionShoppingListArrangeItem extends Transaction<bool>
         after: after,
         before: before,
         category: category,
-        route: route,
-        changedAt: timestamp,
       );
 
   @override

@@ -92,7 +92,7 @@ class AnalyticsPage extends StatelessWidget {
                 ),
                 const Divider(),
                 ListTile(
-                  title: const Text("Households"),
+                  title: const Text("Stores"),
                   trailing: Text(data['households']['total'].toString()),
                 ),
                 ListTile(
